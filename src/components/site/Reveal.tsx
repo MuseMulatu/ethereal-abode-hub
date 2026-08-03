@@ -22,7 +22,8 @@ export function Reveal({
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) {
+          // Also reveal instantly if the section was jumped past (anchor / fast scroll).
+          if (entry.isIntersecting || entry.boundingClientRect.bottom < 0) {
             setShown(true);
             observer.disconnect();
           }
