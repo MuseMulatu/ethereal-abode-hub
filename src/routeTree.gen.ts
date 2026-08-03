@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as KidsRouteImport } from './routes/kids'
+import { Route as KitchenRouteImport } from './routes/kitchen'
+import { Route as SoftFurnishingsRouteImport } from './routes/soft-furnishings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KidsRoute = KidsRouteImport.update({
+  id: '/kids',
+  path: '/kids',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KitchenRoute = KitchenRouteImport.update({
+  id: '/kitchen',
+  path: '/kitchen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SoftFurnishingsRoute = SoftFurnishingsRouteImport.update({
+  id: '/soft-furnishings',
+  path: '/soft-furnishings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/kids': typeof KidsRoute
+  '/kitchen': typeof KitchenRoute
+  '/soft-furnishings': typeof SoftFurnishingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/kids': typeof KidsRoute
+  '/kitchen': typeof KitchenRoute
+  '/soft-furnishings': typeof SoftFurnishingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/kids': typeof KidsRoute
+  '/kitchen': typeof KitchenRoute
+  '/soft-furnishings': typeof SoftFurnishingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/kids' | '/kitchen' | '/soft-furnishings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/kids' | '/kitchen' | '/soft-furnishings'
+  id: '__root__' | '/' | '/kids' | '/kitchen' | '/soft-furnishings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  KidsRoute: typeof KidsRoute
+  KitchenRoute: typeof KitchenRoute
+  SoftFurnishingsRoute: typeof SoftFurnishingsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kids': {
+      id: '/kids'
+      path: '/kids'
+      fullPath: '/kids'
+      preLoaderRoute: typeof KidsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kitchen': {
+      id: '/kitchen'
+      path: '/kitchen'
+      fullPath: '/kitchen'
+      preLoaderRoute: typeof KitchenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/soft-furnishings': {
+      id: '/soft-furnishings'
+      path: '/soft-furnishings'
+      fullPath: '/soft-furnishings'
+      preLoaderRoute: typeof SoftFurnishingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  KidsRoute: KidsRoute,
+  KitchenRoute: KitchenRoute,
+  SoftFurnishingsRoute: SoftFurnishingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
