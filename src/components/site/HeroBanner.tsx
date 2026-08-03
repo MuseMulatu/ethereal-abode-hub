@@ -55,18 +55,23 @@ export function HeroBanner({
       >
         <div className={cn("max-w-3xl text-ink-foreground", align === "center" && "mx-auto")}>
           {eyebrow ? (
-            <span className="eyebrow block opacity-75 animate-fade-in">{eyebrow}</span>
+            <span className="eyebrow hero-in block opacity-75">{eyebrow}</span>
           ) : null}
-          <h1 className="display mt-8 text-[2.75rem] sm:text-6xl lg:text-7xl animate-fade-in">
+          <h1 className="display hero-in mt-8 text-[2.75rem] sm:text-6xl lg:text-7xl"
+          style={{ animationDelay: "120ms" }}>
             {headline}
           </h1>
           {sub ? (
-            <p className="mx-auto mt-8 max-w-xl text-sm leading-relaxed opacity-75 sm:text-base animate-fade-in">
+            <p className="hero-in mx-auto mt-8 max-w-xl text-sm leading-relaxed opacity-75 sm:text-base"
+              style={{ animationDelay: "240ms" }}>
               {sub}
             </p>
           ) : null}
           {ctaLabel && ctaTo ? (
-            <div className={cn("mt-12 flex", align === "center" ? "justify-center" : "")}>
+            <div
+              className={cn("hero-in mt-12 flex", align === "center" ? "justify-center" : "")}
+              style={{ animationDelay: "360ms" }}
+            >
               <Link
                 to={ctaTo}
                 className="eyebrow border border-ink-foreground/40 px-10 py-5 text-ink-foreground transition-colors duration-700 hover:border-ink-foreground hover:bg-ink-foreground hover:text-ink"
