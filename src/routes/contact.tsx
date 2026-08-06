@@ -8,16 +8,16 @@ import { brand } from "@/data/site";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Us — Maison Lumé Showroom, Dubai" },
+      { title: "Contact Us — Ante Design Showroom, Addis Ababa" },
       {
         name: "description",
         content:
-          "Visit the Maison Lumé showroom in Alserkal Avenue, Dubai. Opening hours, phone, WhatsApp concierge, directions and enquiry form.",
+          "Visit the Ante Design showroom on Abkem Tower, Meskel Flower, Addis-Ababa. Opening hours, phone, WhatsApp concierge, directions and enquiry form.",
       },
-      { property: "og:title", content: "Contact Us — Maison Lumé Showroom, Dubai" },
+      { property: "og:title", content: "Contact Us — Ante Design Showroom, Addis-Ababa" },
       {
         property: "og:description",
-        content: "Opening hours, directions and the VIP WhatsApp concierge for the Dubai showroom.",
+        content: "Opening hours, directions and WhatsApp concierge for the Addis-Ababa showroom.",
       },
     ],
   }),
@@ -33,8 +33,8 @@ const details = [
     heading: "Directions",
     lines: [
       brand.address,
-      "Off Al Quoz 1, behind Street 8",
-      "Valet parking at the north gate; 6 minutes from Noor Bank Metro",
+      "Meskel Flower, adjacent to Dreamliner Hotel",
+      "Secure basement parking available; Abkem Tower is the building on the right when entering Meskel Flower from Bole Road.",
     ],
   },
 ];
@@ -62,13 +62,24 @@ function Contact() {
       <section className="mx-auto max-w-[110rem] px-6 pb-24 sm:px-10 lg:px-16">
         <Reveal>
           <div className="aspect-[16/9] w-full overflow-hidden bg-stone lg:aspect-[21/9]">
-            <iframe
-              title="Maison Lumé showroom location"
-              src="https://www.google.com/maps?q=Alserkal%20Avenue%20Al%20Quoz%20Dubai&output=embed"
+            {/* <iframe
+              title="Ante Design showroom location"
+              src="https://www.google.com/maps?q=Alserkal%20Avenue%20Al%20Quoz%20Addis-Ababa&output=embed"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="h-full w-full border-0 grayscale-[95%] contrast-[1.05]"
-            />
+            /> */}
+            <iframe 
+            title="Ante Design showroom location"
+  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.6133037286377!2d38.761009!3d8.998492!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b85ab1b8bdfcd%3A0x6b777a8b30d32f!2sABKEM%20Tower!5e0!3m2!1sen!2set!4v1700000000000!5m2!1sen!2set"
+  width="100%" 
+  height="450" 
+  style={{ border: 0 }} 
+  allowFullScreen={true} 
+  loading="lazy" 
+  referrerPolicy="no-referrer-when-downgrade"
+   className="h-full w-full border-0 grayscale-[95%] contrast-[1.05]" // This Tailwind class makes the map match the luxury monochromatic vibe
+></iframe>
           </div>
         </Reveal>
       </section>

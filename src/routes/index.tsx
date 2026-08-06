@@ -9,13 +9,13 @@ import { images, newArrivals, posts } from "@/data/site";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Maison Lumé — Ultra-Luxury Furniture & Interiors" },
+      { title: "Ante Design — Ultra-Luxury Furniture & Interiors" },
       {
         name: "description",
         content:
-          "A cinematic showroom of modular sofas, stone kitchens, nursery pieces and soft furnishings. Private viewings and VIP concierge in Dubai.",
+          "A cinematic showroom of modular sofas, stone kitchens, nursery pieces and soft furnishings. Private viewings and VIP concierge in Addis-Ababa.",
       },
-      { property: "og:title", content: "Maison Lumé — Ultra-Luxury Furniture & Interiors" },
+      { property: "og:title", content: "Ante Design — Ultra-Luxury Furniture & Interiors" },
       {
         property: "og:description",
         content:
@@ -39,9 +39,10 @@ function Home() {
     <>
       <HeroBanner
         image={images.heroLiving}
-        eyebrow="Maison Lumé — Est. 2011"
+        eyebrow="Ante Design — Est. 2011"
         headline="Interiors that outlive their trends."
-        sub="Modular seating, monolithic stone and undyed textiles, made in limited runs by our atelier in Northern Italy."
+        //sub="Modular seating, monolithic stone and undyed textiles, made in limited runs by our atelier in Northern Italy."
+        sub="Redefining modern Ethiopian living. Explore our curated selection of high-end home, kitchen, kids, and soft furnishings."
         ctaLabel="View Collection"
         ctaTo="/soft-furnishings"
       />
@@ -131,7 +132,7 @@ function Home() {
             <Reveal>
               <span className="eyebrow opacity-60">Lifestyle — Volume IV</span>
               <h2 className="display mt-10 text-4xl sm:text-5xl lg:text-[3.5rem]">
-                A house in Fujairah, dressed in one material.
+                A residence in Old Airport, dressed in one material.
               </h2>
               <div className="mt-12 grid gap-8 sm:grid-cols-2">
                 <p className="text-sm leading-relaxed opacity-70">

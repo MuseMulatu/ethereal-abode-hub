@@ -80,13 +80,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Maison Lumé — Ultra-Luxury Furniture Showroom" },
+      { title: "Ante Design — Ultra-Luxury Furniture Showroom" },
       {
         name: "description",
         content:
-          "Maison Lumé is a curated house of luxury furniture, kitchens and soft furnishings for interiors built to outlive their trends.",
+          "Ante Design is a curated house of luxury furniture, kitchens and soft furnishings for interiors built to outlive their trends.",
       },
-      { name: "author", content: "Maison Lumé" },
+      { name: "author", content: "Ante Design" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -101,7 +101,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { 
+  rel: "icon", 
+  href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231a1a1a'/><text y='70' x='50' font-family='Georgia, serif' font-size='65' fill='white' text-anchor='middle'>A</text></svg>", 
+  type: "image/svg+xml" 
+},
     ],
   }),
   shellComponent: RootShell,

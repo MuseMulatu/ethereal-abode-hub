@@ -6,13 +6,13 @@ import { images, kidsProducts } from "@/data/site";
 export const Route = createFileRoute("/kids")({
   head: () => ({
     meta: [
-      { title: "Kids — Maison Lumé" },
+      { title: "Kids — Ante Design" },
       {
         name: "description",
         content:
           "Cribs, reading chairs, wool rugs and wardrobes in untreated ash and washed linen. Children's furniture that grows up gracefully.",
       },
-      { property: "og:title", content: "Kids — Maison Lumé" },
+      { property: "og:title", content: "Kids — Ante Design" },
       {
         property: "og:description",
         content: "Children's furniture in untreated ash and washed linen, made to last decades.",

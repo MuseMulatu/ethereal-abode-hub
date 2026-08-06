@@ -8,16 +8,16 @@ import { images } from "@/data/site";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Us — Maison Lumé" },
+      { title: "About Us — Ante Design" },
       {
         name: "description",
         content:
-          "Founded in 2011, Maison Lumé designs and makes furniture in limited runs, with an atelier in Northern Italy and a showroom in Dubai.",
+          "Founded in 2011, Ante Design designs and makes furniture in limited runs, with an atelier in Northern Italy and a showroom in Addis-Ababa.",
       },
-      { property: "og:title", content: "About Us — Maison Lumé" },
+      { property: "og:title", content: "About Us — Ante Design" },
       {
         property: "og:description",
-        content: "A house of limited-run furniture, with an atelier in Italy and a Dubai showroom.",
+        content: "A house of limited-run furniture, with an atelier in Italy and a Addis-Ababa showroom.",
       },
     ],
   }),
@@ -64,8 +64,7 @@ function About() {
           </Reveal>
           <Reveal delay={120} className="lg:col-span-8">
             <p className="display text-[1.75rem] leading-[1.35] sm:text-4xl lg:text-[2.6rem] lg:leading-[1.3]">
-              Maison Lumé began as a two-bench joinery outside Udine, making tables for architects
-              who wanted something they could not buy.
+              Ante Design began as a private two-bench joinery in Addis Ababa, engineering custom pieces for architects who required uncompromising quality.
             </p>
             <div className="mt-14 grid gap-10 sm:grid-cols-2">
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -74,8 +73,7 @@ function About() {
                 release a design until nothing further can be removed from it.
               </p>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                What changed is the reach. A Dubai showroom, a workshop in Al Quoz for soft
-                furnishings, and clients in thirty-eight countries who ask us to do the whole house
+                What changed is the reach. A flagship showroom in Meskel Flower, a dedicated atelier in Kera for soft furnishings, and clients who ask us to do the whole house
                 rather than a single room.
               </p>
             </div>
@@ -114,7 +112,7 @@ function About() {
           <div className="h-[60vh] overflow-hidden lg:h-auto lg:min-h-[38rem]">
             <img
               src={images.showroom}
-              alt="The Maison Lumé showroom at dusk, lit behind a full-height glass facade"
+              alt="The Ante Design showroom at dusk, lit behind a full-height glass facade"
               loading="lazy"
               className="h-full w-full object-cover"
             />
@@ -124,7 +122,7 @@ function About() {
               <SectionHeader
                 tone="light"
                 eyebrow="The Showroom"
-                title="Alserkal Avenue, Dubai"
+                title="Abkem Tower, Meskel Flower, Addis Ababa"
                 intro="Twelve hundred square metres arranged as four complete interiors rather than a floor of products. Fabric library, stone bench and a designer always on the floor."
               />
               <Link

@@ -2,7 +2,7 @@ import { brand } from "@/data/site";
 
 export function WhatsAppConcierge() {
   const href = `https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
-    `Hello ${brand.name} — I would like to speak with the VIP concierge.`,
+    `Hello ${brand.name} — I would like to speak with support.`,
   )}`;
 
   return (
@@ -10,7 +10,7 @@ export function WhatsAppConcierge() {
       href={href}
       target="_blank"
       rel="noreferrer"
-      aria-label="Contact the VIP WhatsApp concierge"
+      aria-label="Contact Sales"
       className="group fixed right-5 bottom-5 z-50 flex items-center gap-0 overflow-hidden border border-ink-foreground/15 bg-ink py-4 pr-4 pl-4 text-ink-foreground shadow-[0_18px_45px_-18px_oklch(0.16_0.004_60_/_0.6)] transition-all duration-700 ease-cinematic hover:pr-6 sm:right-8 sm:bottom-8"
     >
       <span className="relative flex size-5 shrink-0 items-center justify-center">
@@ -20,7 +20,7 @@ export function WhatsAppConcierge() {
         </svg>
       </span>
       <span className="eyebrow max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-700 ease-cinematic group-hover:max-w-[13rem] group-hover:pl-4 group-hover:opacity-100">
-        VIP Concierge
+        Contact Sales
       </span>
     </a>
   );

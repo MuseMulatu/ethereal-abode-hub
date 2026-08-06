@@ -6,13 +6,13 @@ import { images, softProducts } from "@/data/site";
 export const Route = createFileRoute("/soft-furnishings")({
   head: () => ({
     meta: [
-      { title: "Soft Furnishings — Pillows & Puff Sofas — Maison Lumé" },
+      { title: "Soft Furnishings — Pillows & Puff Sofas — Ante Design" },
       {
         name: "description",
         content:
           "Bouclé puff sofas, linen pillows, alpaca throws and Belgian flax bed linen in a warm neutral palette.",
       },
-      { property: "og:title", content: "Soft Furnishings — Maison Lumé" },
+      { property: "og:title", content: "Soft Furnishings — Ante Design" },
       {
         property: "og:description",
         content: "Bouclé puff sofas, linen pillows and alpaca throws in warm neutrals.",
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/soft-furnishings")({
       intro="Texture as the last remaining ornament — bouclé, boiled wool, stonewashed linen and undyed alpaca, all in one warm register."
       heroImage={images.catSoft}
       products={softProducts}
-      note="Cushions and puffs are cut and filled to order in our Al Quoz workshop. Custom sizes and client's own material welcome, with a two-week turnaround."
+      note="Cushions and puffs are cut and filled to order in our Kera atelier. Custom sizes and client's own material welcome, with a two-week turnaround."
     />
   ),
 });

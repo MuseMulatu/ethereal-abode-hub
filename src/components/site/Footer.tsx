@@ -26,7 +26,7 @@ const columns = [
     heading: "Client Care",
     links: [
       { to: "/contact", label: "Contact Us" },
-      { to: "/contact", label: "VIP Concierge" },
+      { to: "/contact", label: "Find Support" },
       { to: "/contact", label: "Trade Programme" },
       { to: "/contact", label: "Delivery & White Glove" },
     ],
@@ -119,7 +119,7 @@ export function Footer() {
 
         <div className="mt-24 flex flex-col gap-4 border-t border-ink-foreground/12 pt-8 text-xs tracking-[0.16em] uppercase opacity-45 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {brand.name}. All rights reserved.</p>
-          <p>Trade Licence 883104 · Dubai, UAE</p>
+          <p>Addis-Ababa, ET | | </p>
         </div>
       </div>
     </footer>
