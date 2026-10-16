@@ -7,16 +7,16 @@ import { featuredPost, posts } from "@/data/site";
 export const Route = createFileRoute("/blog")({
   head: () => ({
     meta: [
-      { title: "The Design Journal — Ante Design" },
+      { title: "The Design Journal — Anteniguss Home" },
       {
         name: "description",
         content:
-          "An editorial journal on interiors, materials and craft — essays on stone, bouclé, light and the architecture of stillness.",
+          "An editorial journal on Ethiopian interiors, materials and craft — essays on custom furniture, fabrics, light, and showroom life in Addis Ababa.",
       },
-      { property: "og:title", content: "The Design Journal — Ante Design" },
+      { property: "og:title", content: "The Design Journal — Anteniguss Home" },
       {
         property: "og:description",
-        content: "Essays on interiors, materials and craft from the Ante Design atelier.",
+        content: "Essays on interiors, materials and craft from Anteniguss Home in Addis Ababa.",
       },
     ],
   }),

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { brand } from "@/data/site";
 import { cn } from "@/lib/utils";
-import anteLogo from '@/assets/ante-logo.png';
+import anteLogo from "@/assets/ante-logo.png";
 
 export const navLinks = [
   { to: "/", label: "Furniture" },
@@ -52,12 +52,12 @@ export function Navbar() {
         )}
       >
         <Link to="/" className="z-50 flex items-center">
-          <img 
-            src={anteLogo} 
-            alt="Ante Design Logo" 
+          <img
+            src={anteLogo}
+            alt="Anteniguss Home Logo"
             className={cn(
               "h-[50px] w-auto object-contain transition-all duration-700 ease-cinematic sm:h-[80px]",
-              !solid && "brightness-0 invert" 
+              !solid && "brightness-0 invert",
             )}
           />
         </Link>

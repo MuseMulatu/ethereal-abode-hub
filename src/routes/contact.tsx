@@ -8,16 +8,16 @@ import { brand } from "@/data/site";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Us — Ante Design Showroom, Addis Ababa" },
+      { title: "Contact Us — Anteniguss Home Showroom, Addis Ababa" },
       {
         name: "description",
         content:
-          "Visit the Ante Design showroom on Abkem Tower, Meskel Flower, Addis-Ababa. Opening hours, phone, WhatsApp concierge, directions and enquiry form.",
+          "Visit the Anteniguss Home showroom at Abkem Tower, Meskel Flower, Addis Ababa. Opening hours, phone, WhatsApp concierge, and showroom directions.",
       },
-      { property: "og:title", content: "Contact Us — Ante Design Showroom, Addis-Ababa" },
+      { property: "og:title", content: "Contact Us — Anteniguss Home Showroom, Addis Ababa" },
       {
         property: "og:description",
-        content: "Opening hours, directions and WhatsApp concierge for the Addis-Ababa showroom.",
+        content: "Opening hours, directions and WhatsApp concierge for our Addis Ababa showroom.",
       },
     ],
   }),
@@ -27,7 +27,11 @@ export const Route = createFileRoute("/contact")({
 const details = [
   {
     heading: "Opening Hours",
-    lines: ["Monday – Thursday, 10:00 – 20:00", "Friday – Saturday, 10:00 – 22:00", "Sunday by private appointment"],
+    lines: [
+      "Monday – Thursday, 10:00 – 20:00",
+      "Friday – Saturday, 10:00 – 22:00",
+      "Sunday by private appointment",
+    ],
   },
   {
     heading: "Directions",
@@ -69,17 +73,17 @@ function Contact() {
               referrerPolicy="no-referrer-when-downgrade"
               className="h-full w-full border-0 grayscale-[95%] contrast-[1.05]"
             /> */}
-            <iframe 
-            title="Ante Design showroom location"
-  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.6133037286377!2d38.761009!3d8.998492!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b85ab1b8bdfcd%3A0x6b777a8b30d32f!2sABKEM%20Tower!5e0!3m2!1sen!2set!4v1700000000000!5m2!1sen!2set"
-  width="100%" 
-  height="450" 
-  style={{ border: 0 }} 
-  allowFullScreen={true} 
-  loading="lazy" 
-  referrerPolicy="no-referrer-when-downgrade"
-   className="h-full w-full border-0 grayscale-[95%] contrast-[1.05]" // This Tailwind class makes the map match the luxury monochromatic vibe
-></iframe>
+            <iframe
+              title="Ante Design showroom location"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.6133037286377!2d38.761009!3d8.998492!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b85ab1b8bdfcd%3A0x6b777a8b30d32f!2sABKEM%20Tower!5e0!3m2!1sen!2set!4v1700000000000!5m2!1sen!2set"
+              width="100%"
+              height="450"
+              style={{ border: 0 }}
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="h-full w-full border-0 grayscale-[95%] contrast-[1.05]" // This Tailwind class makes the map match the luxury monochromatic vibe
+            ></iframe>
           </div>
         </Reveal>
       </section>
@@ -150,10 +154,7 @@ function Contact() {
                 <Field label="Email" name="email" type="email" />
                 <Field label="Telephone" name="phone" type="tel" required={false} />
                 <div>
-                  <label
-                    htmlFor="message"
-                    className="eyebrow block text-muted-foreground"
-                  >
+                  <label htmlFor="message" className="eyebrow block text-muted-foreground">
                     Your project
                   </label>
                   <textarea

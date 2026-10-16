@@ -1,6 +1,6 @@
 # Luxe Haven
 
-Build a high-performance, ultra-luxury digital furniture showroom and e-commerce frontend. The design language must strictly mirror global luxury brands like Restoration Hardware (RH), Minotti, BoConcept, and CB2. 
+Build a high-performance, ultra-luxury digital furniture showroom and e-commerce frontend. The design language must strictly mirror global luxury brands like Restoration Hardware (RH), Minotti, BoConcept, and CB2.
 
 DESIGN SYSTEM & AESTHETIC:
 
@@ -8,7 +8,7 @@ DESIGN SYSTEM & AESTHETIC:
 
 - Typography: Use a sophisticated Serif for large headings (e.g., Playfair Display) and a highly legible Sans-Serif for body text and micro-copy (e.g., Inter). Use wide letter-spacing (tracking-widest) and uppercase for subheadings.
 
-- Layout: Edge-to-edge, full-bleed high-resolution image placeholders, massive whitespace, and zero clutter. 
+- Layout: Edge-to-edge, full-bleed high-resolution image placeholders, massive whitespace, and zero clutter.
 
 - Animations: Smooth, cinematic fade-ins and subtle parallax scrolling. No bouncy or cheap animations.
 
@@ -32,7 +32,7 @@ Please set up React Router with the following exact pages:
 
 PAGE SPECIFICATIONS:
 
-1. Home (Landing Page): 
+1. Home (Landing Page):
 
 - A cinematic, full-screen (h-screen) hero section with a high-quality background image overlay, a minimal elegant headline, and a "View Collection" CTA.
 
@@ -44,7 +44,7 @@ PAGE SPECIFICATIONS:
 
 - Clean masonry grid for products.
 
-- Product cards should only show the image, title, and a subtle "Inquire" button on hover. 
+- Product cards should only show the image, title, and a subtle "Inquire" button on hover.
 
 3. Blog Page:
 

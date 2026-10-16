@@ -6,28 +6,28 @@ import { images, kitchenProducts } from "@/data/site";
 export const Route = createFileRoute("/kitchen")({
   head: () => ({
     meta: [
-      { title: "Kitchen & More — Ante Design" },
+      { title: "Dining & Tables — Anteniguss Home" },
       {
         name: "description",
         content:
-          "Stone islands, rift-cut oak cabinetry, dining tables and serving collections. Bespoke luxury kitchens made to order.",
+          "Oval dining tables, pedestal sets, geometric TV units and sculpted consoles made in Addis Ababa.",
       },
-      { property: "og:title", content: "Kitchen & More — Ante Design" },
+      { property: "og:title", content: "Dining & Tables — Anteniguss Home" },
       {
         property: "og:description",
-        content: "Stone islands, rift-cut oak cabinetry and dining pieces, made to order.",
+        content: "Oval dining tables, pedestal sets and custom console tables.",
       },
     ],
   }),
   component: () => (
     <CategoryPage
-      eyebrow="Collection 01"
-      headline="Kitchen & More"
-      title="Stone, oak and nothing else"
-      intro="Kitchens drawn as architecture rather than cabinetry — honed surfaces, concealed storage and a counter that stays clear."
-      heroImage={images.catKitchen}
+      eyebrow="Collection 02"
+      headline="Dining & Tables"
+      title="Dining sets, TV units and console tables"
+      intro="Pieces that finish a room — crafted in solid timber with custom tops and turned wood legs to fit your dining and living spaces."
+      heroImage={images.diningShowroom}
       products={kitchenProducts}
-      note="All kitchen programmes are quoted after a site survey. Lead time is 10–14 weeks from drawing approval, including white-glove installation by our own fitters."
+      note="All dining tables and consoles can be customized in length, wood finish, and seating configurations to fit your exact floor plan."
     />
   ),
 });

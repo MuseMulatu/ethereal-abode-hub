@@ -66,7 +66,10 @@ export function Footer() {
                   placeholder="Email address"
                   className="w-full bg-transparent text-sm tracking-wide placeholder:text-ink-foreground/40 focus:outline-none"
                 />
-                <button type="submit" className="eyebrow shrink-0 pl-4 opacity-70 hover:opacity-100">
+                <button
+                  type="submit"
+                  className="eyebrow shrink-0 pl-4 opacity-70 hover:opacity-100"
+                >
                   Join
                 </button>
               </div>
@@ -118,7 +121,9 @@ export function Footer() {
         </div>
 
         <div className="mt-24 flex flex-col gap-4 border-t border-ink-foreground/12 pt-8 text-xs tracking-[0.16em] uppercase opacity-45 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} {brand.name}. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} {brand.name}. All rights reserved.
+          </p>
           <p>Addis-Ababa, ET | | </p>
         </div>
       </div>

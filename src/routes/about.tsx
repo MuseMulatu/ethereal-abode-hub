@@ -3,21 +3,22 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { HeroBanner } from "@/components/site/HeroBanner";
 import { Reveal } from "@/components/site/Reveal";
 import { SectionHeader } from "@/components/site/SectionHeader";
-import { images } from "@/data/site";
+import { brand, images } from "@/data/site";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Us — Ante Design" },
+      { title: "About Us — Anteniguss Home" },
       {
         name: "description",
         content:
-          "Founded in 2011, Ante Design designs and makes furniture in limited runs, with an atelier in Northern Italy and a showroom in Addis-Ababa.",
+          "Anteniguss Home: furniture for the modern Ethiopian home. Sofas, armchairs, dining and beds made in Addis Ababa. Showroom at Meskel Flower, Abkem Tower.",
       },
-      { property: "og:title", content: "About Us — Ante Design" },
+      { property: "og:title", content: "About Us — Anteniguss Home" },
       {
         property: "og:description",
-        content: "A house of limited-run furniture, with an atelier in Italy and a Addis-Ababa showroom.",
+        content:
+          "Custom furniture for the modern Ethiopian home, made in Addis Ababa. Showroom at Meskel Flower, Abkem Tower.",
       },
     ],
   }),
@@ -26,23 +27,23 @@ export const Route = createFileRoute("/about")({
 
 const numbers = [
   { value: "2011", label: "Founded" },
-  { value: "90", label: "Pieces per run" },
-  { value: "14", label: "Master joiners" },
-  { value: "38", label: "Countries delivered" },
+  { value: "100%", label: "Made in Addis Ababa" },
+  { value: "20–30", label: "Days custom turnaround" },
+  { value: "2", label: "Floors of showroom" },
 ];
 
 const principles = [
   {
-    title: "One drawing",
-    body: "A piece is drawn once and prototyped in solid timber. If a revision is needed, the design was not ready.",
+    title: "Made to order",
+    body: "Every piece is crafted by our own production team. Tell us your room dimensions and choose the fabric and color.",
   },
   {
-    title: "Honest material",
-    body: "Undyed textiles, unfilled stone, oiled timber. Nothing is finished to hide what it is made of.",
+    title: "Honest materials",
+    body: "Carefully selected bouclé, velvets, and textured weaves on durable solid wood frames built for daily life.",
   },
   {
-    title: "Limited runs",
-    body: "Ninety of each piece per year. Scarcity is not a marketing device; it is the natural output of our workshop.",
+    title: "Showroom experience",
+    body: "Sit on every sofa and feel the fabrics firsthand across two floors at Abkem Tower, Meskel Flower.",
   },
 ];
 
@@ -50,9 +51,9 @@ function About() {
   return (
     <>
       <HeroBanner
-        image={images.aboutAtelier}
-        eyebrow="Since 2011"
-        headline="Fourteen hands, ninety pieces a year."
+        image={images.heroLivingRoom}
+        eyebrow="Anteniguss Home · Addis Ababa"
+        headline="Furniture for the modern Ethiopian home."
         height="tall"
         align="center"
       />
@@ -60,21 +61,24 @@ function About() {
       <section className="mx-auto max-w-[110rem] px-6 py-28 sm:px-10 lg:px-16 lg:py-40">
         <div className="grid gap-14 lg:grid-cols-12">
           <Reveal className="lg:col-span-4">
-            <span className="eyebrow text-muted-foreground">Our Philosophy</span>
+            <span className="eyebrow text-muted-foreground">Our Story</span>
           </Reveal>
           <Reveal delay={120} className="lg:col-span-8">
             <p className="display text-[1.75rem] leading-[1.35] sm:text-4xl lg:text-[2.6rem] lg:leading-[1.3]">
-              Ante Design began as a private two-bench joinery in Addis Ababa, engineering custom pieces for architects who required uncompromising quality.
+              Anteniguss Home was established in Addis Ababa to design and craft distinctive,
+              high-quality furniture tailored specifically for Ethiopian homes.
             </p>
             <div className="mt-14 grid gap-10 sm:grid-cols-2">
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Fifteen years later the method has not changed. Our joiners still cut every frame
-                from air-dried European oak and ash, still fit drawers by hand, and still refuse to
-                release a design until nothing further can be removed from it.
+                From initial sketch and full-scale prototype to the final hand-finished piece, our
+                master craftsmen take immense pride in every joint, cushion, and stitch. We believe
+                that furniture should not just fill a room—it should create the foundation for your
+                family's life stories.
               </p>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                What changed is the reach. A flagship showroom in Meskel Flower, a dedicated atelier in Kera for soft furnishings, and clients who ask us to do the whole house
-                rather than a single room.
+                Our two-floor showroom at Meskel Flower, Abkem Tower lets you experience full living
+                and dining settings in person. Pick your custom size, select your favorite fabric,
+                and let our white-glove team deliver and assemble it in your home.
               </p>
             </div>
           </Reveal>
@@ -94,7 +98,7 @@ function About() {
 
       <section className="mx-auto max-w-[110rem] px-6 py-28 sm:px-10 lg:px-16 lg:py-40">
         <Reveal>
-          <SectionHeader eyebrow="Method" title="Three rules we keep" />
+          <SectionHeader eyebrow="Our Standards" title="Three rules we keep" />
         </Reveal>
         <div className="mt-20 grid gap-14 lg:grid-cols-3 lg:gap-10">
           {principles.map((p, i) => (
@@ -111,8 +115,8 @@ function About() {
         <div className="grid lg:grid-cols-2">
           <div className="h-[60vh] overflow-hidden lg:h-auto lg:min-h-[38rem]">
             <img
-              src={images.showroom}
-              alt="The Ante Design showroom at dusk, lit behind a full-height glass facade"
+              src={images.clientHomeLiving}
+              alt="Living room interior designed with Anteniguss Home furniture"
               loading="lazy"
               className="h-full w-full object-cover"
             />
@@ -123,14 +127,26 @@ function About() {
                 tone="light"
                 eyebrow="The Showroom"
                 title="Abkem Tower, Meskel Flower, Addis Ababa"
-                intro="Twelve hundred square metres arranged as four complete interiors rather than a floor of products. Fabric library, stone bench and a designer always on the floor."
+                intro="Two complete floors arranged as authentic living and dining interiors rather than a crowded sales floor. Sit on every piece, browse our extensive fabric collection, and chat with our design team."
               />
-              <Link
-                to="/contact"
-                className="eyebrow mt-14 inline-block border border-ink-foreground/40 px-10 py-5 transition-colors duration-700 hover:bg-ink-foreground hover:text-ink"
-              >
-                Plan Your Visit
-              </Link>
+              <div className="mt-10 flex flex-wrap gap-4">
+                <Link
+                  to="/contact"
+                  className="eyebrow inline-block border border-ink-foreground/40 px-10 py-5 transition-colors duration-700 hover:bg-ink-foreground hover:text-ink"
+                >
+                  Plan Your Visit
+                </Link>
+                <a
+                  href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
+                    "Hello Anteniguss Home, I'd like to ask about visiting the showroom.",
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="eyebrow inline-block border border-transparent bg-foreground px-8 py-5 text-background transition-opacity hover:opacity-85"
+                >
+                  WhatsApp Concierge
+                </a>
+              </div>
             </Reveal>
           </div>
         </div>

@@ -6,28 +6,28 @@ import { images, softProducts } from "@/data/site";
 export const Route = createFileRoute("/soft-furnishings")({
   head: () => ({
     meta: [
-      { title: "Soft Furnishings — Pillows & Puff Sofas — Ante Design" },
+      { title: "Sofas & Seating — Anteniguss Home" },
       {
         name: "description",
         content:
-          "Bouclé puff sofas, linen pillows, alpaca throws and Belgian flax bed linen in a warm neutral palette.",
+          "Modular sectionals, curved bouclé sofas, armchairs and beds made to order in Addis Ababa.",
       },
-      { property: "og:title", content: "Soft Furnishings — Ante Design" },
+      { property: "og:title", content: "Sofas & Seating — Anteniguss Home" },
       {
         property: "og:description",
-        content: "Bouclé puff sofas, linen pillows and alpaca throws in warm neutrals.",
+        content: "Custom modular sofas and armchairs made in Addis Ababa.",
       },
     ],
   }),
   component: () => (
     <CategoryPage
-      eyebrow="Collection 03"
-      headline="Soft Furnishings"
-      title="Pillows, puffs and quiet texture"
-      intro="Texture as the last remaining ornament — bouclé, boiled wool, stonewashed linen and undyed alpaca, all in one warm register."
-      heroImage={images.catSoft}
+      eyebrow="Collection 01"
+      headline="Sofas & Armchairs"
+      title="Made in Addis Ababa to your dimensions"
+      intro="Every sofa, chair and table is built by our own production team. Tell us your room size and pick the fabric and colour."
+      heroImage={images.heroLivingRoom}
       products={softProducts}
-      note="Cushions and puffs are cut and filled to order in our Kera atelier. Custom sizes and client's own material welcome, with a two-week turnaround."
+      note="Custom orders ready in about 20–30 days. See and feel fabrics at our Meskel Flower showroom, with delivery and setup across Addis Ababa by our team."
     />
   ),
 });

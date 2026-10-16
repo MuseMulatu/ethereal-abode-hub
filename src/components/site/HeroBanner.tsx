@@ -3,26 +3,90 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { useParallax } from "@/components/site/Reveal";
 
-export function HeroBanner({
-  image,
-  eyebrow,
-  headline,
-  sub,
-  ctaLabel,
-  ctaTo,
-  height = "screen",
-  align = "center",
-}: {
+export interface HeroBannerProps {
   image: string;
   eyebrow?: string;
+  amharicEyebrow?: string;
   headline: string;
   sub?: string;
   ctaLabel?: string;
   ctaTo?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaTo?: string;
   height?: "screen" | "tall" | "short";
   align?: "center" | "left";
-}) {
-  const offset = useParallax(0.15);
+  variant?: "card" | "classic";
+}
+
+export function HeroBanner({
+  image,
+  eyebrow,
+  amharicEyebrow,
+  headline,
+  sub,
+  ctaLabel,
+  ctaTo,
+  secondaryCtaLabel,
+  secondaryCtaTo,
+  height = "screen",
+  align = "center",
+  variant = "classic",
+}: HeroBannerProps) {
+  const offset = useParallax(0.12);
+
+  if (variant === "card") {
+    return (
+      <section className="relative w-full overflow-hidden bg-stone">
+        <div className="relative w-full overflow-hidden bg-muted">
+          <img
+            src={image}
+            alt={headline}
+            className="h-[clamp(360px,62vw,640px)] w-full object-cover object-center"
+            fetchPriority="high"
+          />
+        </div>
+
+        <div className="mx-auto w-full max-w-[90rem] px-4 sm:px-6 lg:px-8 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-10 z-10">
+          <div className="sm:pointer-events-auto max-w-[30rem] bg-background p-7 sm:p-9 shadow-sm sm:shadow-lg border border-border/50 flex flex-col gap-3.5 my-4 sm:my-0">
+            {amharicEyebrow || eyebrow ? (
+              <span
+                className="text-xs sm:text-[0.9rem] font-medium text-muted-foreground tracking-normal font-sans"
+                lang="am"
+              >
+                {amharicEyebrow || eyebrow}
+              </span>
+            ) : null}
+            <h1 className="text-[1.8rem] sm:text-3xl lg:text-[2.6rem] font-semibold tracking-tight text-foreground leading-[1.15] text-balance">
+              {headline}
+            </h1>
+            {sub ? (
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{sub}</p>
+            ) : null}
+            {(ctaLabel && ctaTo) || (secondaryCtaLabel && secondaryCtaTo) ? (
+              <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
+                {ctaLabel && ctaTo ? (
+                  <Link
+                    to={ctaTo}
+                    className="inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-sm font-semibold text-background transition-opacity hover:opacity-85"
+                  >
+                    {ctaLabel}
+                  </Link>
+                ) : null}
+                {secondaryCtaLabel && secondaryCtaTo ? (
+                  <Link
+                    to={secondaryCtaTo}
+                    className="inline-flex items-center justify-center gap-2 border border-foreground bg-transparent px-6 py-3.5 text-sm font-semibold text-foreground transition-opacity hover:opacity-85"
+                  >
+                    {secondaryCtaLabel}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -54,16 +118,18 @@ export function HeroBanner({
         )}
       >
         <div className={cn("max-w-3xl text-ink-foreground", align === "center" && "mx-auto")}>
-          {eyebrow ? (
-            <span className="eyebrow hero-in block opacity-75">{eyebrow}</span>
-          ) : null}
-          <h1 className="display hero-in mt-8 text-[2.75rem] sm:text-6xl lg:text-7xl"
-          style={{ animationDelay: "120ms" }}>
+          {eyebrow ? <span className="eyebrow hero-in block opacity-75">{eyebrow}</span> : null}
+          <h1
+            className="display hero-in mt-8 text-[2.75rem] sm:text-6xl lg:text-7xl"
+            style={{ animationDelay: "120ms" }}
+          >
             {headline}
           </h1>
           {sub ? (
-            <p className="hero-in mx-auto mt-8 max-w-xl text-sm leading-relaxed opacity-75 sm:text-base"
-              style={{ animationDelay: "240ms" }}>
+            <p
+              className="hero-in mx-auto mt-8 max-w-xl text-sm leading-relaxed opacity-75 sm:text-base"
+              style={{ animationDelay: "240ms" }}
+            >
               {sub}
             </p>
           ) : null}

@@ -6,28 +6,28 @@ import { images, kidsProducts } from "@/data/site";
 export const Route = createFileRoute("/kids")({
   head: () => ({
     meta: [
-      { title: "Kids — Ante Design" },
+      { title: "Bedroom & Accent Chairs — Anteniguss Home" },
       {
         name: "description",
         content:
-          "Cribs, reading chairs, wool rugs and wardrobes in untreated ash and washed linen. Children's furniture that grows up gracefully.",
+          "Channel velvet beds, padded headboard frames, boucle armchairs and accent seating made in Addis Ababa.",
       },
-      { property: "og:title", content: "Kids — Ante Design" },
+      { property: "og:title", content: "Bedroom & Accent Chairs — Anteniguss Home" },
       {
         property: "og:description",
-        content: "Children's furniture in untreated ash and washed linen, made to last decades.",
+        content: "Channel velvet beds and bespoke armchairs made to order.",
       },
     ],
   }),
   component: () => (
     <CategoryPage
-      eyebrow="Collection 02"
-      headline="Kids"
-      title="Rooms that grow up gracefully"
-      intro="Untreated ash, washed linen and non-toxic finishes — pieces a child can grow through and a house can keep."
-      heroImage={images.catKids}
+      eyebrow="Collection 03"
+      headline="Bedroom & Accent Chairs"
+      title="Beds, reading chairs and quiet comfort"
+      intro="Channel velvet beds and tactile bouclé armchairs tailored to bring serene warmth and refined proportions into personal spaces."
+      heroImage={images.bedVelvet}
       products={kidsProducts}
-      note="Every kids piece is finished with plant-based oils and certified to EN 716. Cribs convert to toddler beds; wardrobes are supplied with anti-tip anchoring."
+      note="Beds and accent chairs are produced in our Addis Ababa workshop in your choice of upholstery fabric, dimensions, and cushioning firmness."
     />
   ),
 });
