@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 
 import { brand } from "@/data/site";
 import { cn } from "@/lib/utils";
+import anteLogo from '@/assets/ante-logo.png';
 
 export const navLinks = [
-  { to: "/", label: "Home" },
-  { to: "/kitchen", label: "Kitchen & More" },
-  { to: "/kids", label: "Kids" },
+  { to: "/", label: "Furniture" },
   { to: "/soft-furnishings", label: "Soft Furnishings" },
+  { to: "/kids", label: "Kids" },
+  { to: "/kitchen", label: "Kitchen" },
   { to: "/blog", label: "Journal" },
   { to: "/about", label: "About Us" },
   { to: "/contact", label: "Contact" },
@@ -50,12 +51,20 @@ export function Navbar() {
           solid ? "text-foreground" : "text-ink-foreground",
         )}
       >
-        <Link to="/" className="display text-xl tracking-[0.32em] uppercase sm:text-[1.35rem]">
-          {brand.name}
+        <Link to="/" className="z-50 flex items-center">
+          <img 
+            src={anteLogo} 
+            alt="Ante Design Logo" 
+            className={cn(
+              "h-[50px] w-auto object-contain transition-all duration-700 ease-cinematic sm:h-[80px]",
+              !solid && "brightness-0 invert" 
+            )}
+          />
         </Link>
 
         <nav className="hidden items-center gap-9 lg:flex">
-          {navLinks.slice(1).map((link) => (
+          {/* Removed .slice(1) so 'Furniture' actually shows up on the desktop navbar */}
+          {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
@@ -72,7 +81,7 @@ export function Navbar() {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label="Toggle menu"
-          className="eyebrow lg:hidden"
+          className="eyebrow z-50 lg:hidden"
         >
           {open ? "Close" : "Menu"}
         </button>
