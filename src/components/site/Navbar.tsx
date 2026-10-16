@@ -1,9 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import anteLogo from "@/assets/ante-logo.png";
 import { brand } from "@/data/site";
 import { cn } from "@/lib/utils";
-import anteLogo from "@/assets/ante-logo.png";
 
 export const navLinks = [
   { to: "/", label: "Furniture" },
@@ -62,8 +63,7 @@ export function Navbar() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-9 lg:flex">
-          {/* Removed .slice(1) so 'Furniture' actually shows up on the desktop navbar */}
+        <nav className="hidden items-center gap-7 lg:flex">
           {navLinks.map((link) => (
             <Link
               key={link.to}
@@ -74,6 +74,16 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          <a
+            href="/anteniguss-look-book-2026.pdf"
+            download="Anteniguss-Look-Book-2026.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="eyebrow inline-flex items-center gap-2 border border-current px-4 py-2 opacity-85 transition-opacity hover:opacity-100"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Catalog</span>
+          </a>
         </nav>
 
         <button
@@ -90,7 +100,7 @@ export function Navbar() {
       <div
         className={cn(
           "overflow-hidden border-border bg-background transition-[max-height] duration-700 ease-cinematic lg:hidden",
-          open ? "max-h-[32rem] border-t" : "max-h-0",
+          open ? "max-h-[36rem] border-t" : "max-h-0",
         )}
       >
         <nav className="flex flex-col px-6 py-6 sm:px-10">
@@ -103,6 +113,16 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          <a
+            href="/anteniguss-look-book-2026.pdf"
+            download="Anteniguss-Look-Book-2026.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-sm font-semibold text-background transition-opacity hover:opacity-85"
+          >
+            <Download className="h-4 w-4" />
+            Download 2026 Look Book
+          </a>
         </nav>
       </div>
     </header>

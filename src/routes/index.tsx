@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Hammer, MessageCircle, Ruler, Truck } from "lucide-react";
+import { Download, Hammer, MessageCircle, Ruler, Truck } from "lucide-react";
 
 import { HeroBanner } from "@/components/site/HeroBanner";
 import { ProductCard } from "@/components/site/ProductCard";
@@ -247,6 +247,16 @@ function Home() {
               >
                 <MessageCircle className="h-4 w-4" />
                 Start a custom order
+              </a>
+              <a
+                href="/anteniguss-look-book-2026.pdf"
+                download="Anteniguss-Look-Book-2026.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 border border-foreground bg-transparent px-6 py-3.5 text-sm font-semibold text-foreground transition-opacity hover:opacity-85"
+              >
+                <Download className="h-4 w-4" />
+                Download 2026 Look Book
               </a>
             </div>
           </div>

@@ -1,16 +1,24 @@
 import { Link } from "@tanstack/react-router";
+import { Download } from "lucide-react";
 import { useState } from "react";
 
 import { brand } from "@/data/site";
 
-const columns = [
+type FooterLink =
+  { to: string; label: string; href?: never } | { href: string; label: string; to?: never };
+
+interface FooterColumn {
+  heading: string;
+  links: FooterLink[];
+}
+
+const columns: FooterColumn[] = [
   {
     heading: "Collections",
     links: [
-      { to: "/kitchen", label: "Kitchen & More" },
-      { to: "/kids", label: "Kids" },
-      { to: "/soft-furnishings", label: "Soft Furnishings" },
-      { to: "/soft-furnishings", label: "Pillows & Puff Sofas" },
+      { to: "/soft-furnishings", label: "Sofas & Armchairs" },
+      { to: "/kitchen", label: "Dining & Tables" },
+      { to: "/kids", label: "Bedroom & Living" },
     ],
   },
   {
@@ -18,7 +26,7 @@ const columns = [
     links: [
       { to: "/about", label: "About Us" },
       { to: "/blog", label: "Design Journal" },
-      { to: "/about", label: "The Atelier" },
+      { href: "/anteniguss-look-book-2026.pdf", label: "2026 Look Book (PDF)" },
       { to: "/contact", label: "Showroom Visit" },
     ],
   },
@@ -27,11 +35,10 @@ const columns = [
     links: [
       { to: "/contact", label: "Contact Us" },
       { to: "/contact", label: "Find Support" },
-      { to: "/contact", label: "Trade Programme" },
-      { to: "/contact", label: "Delivery & White Glove" },
+      { to: "/contact", label: "Delivery & Setup" },
     ],
   },
-] as const;
+];
 
 export function Footer() {
   const [email, setEmail] = useState("");
@@ -44,12 +51,25 @@ export function Footer() {
           <div className="lg:col-span-5">
             <p className="display text-2xl tracking-[0.32em] uppercase">{brand.name}</p>
             <p className="mt-8 max-w-sm text-sm leading-relaxed opacity-65">
-              A curated house of furniture, kitchens and soft furnishings for interiors built to
-              outlive their trends.
+              Furniture for the modern Ethiopian home. Sofas, armchairs, dining sets and beds, made
+              in Addis Ababa in the size and fabric you choose.
             </p>
 
+            <div className="mt-8">
+              <a
+                href="/anteniguss-look-book-2026.pdf"
+                download="Anteniguss-Look-Book-2026.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="eyebrow inline-flex items-center gap-2 border border-ink-foreground/35 px-6 py-3.5 text-ink-foreground transition-colors hover:border-ink-foreground hover:bg-ink-foreground hover:text-ink"
+              >
+                <Download className="h-4 w-4" />
+                Download 2026 Look Book
+              </a>
+            </div>
+
             <form
-              className="mt-14 max-w-sm"
+              className="mt-12 max-w-sm"
               onSubmit={(e) => {
                 e.preventDefault();
                 setJoined(true);
@@ -87,12 +107,24 @@ export function Footer() {
               <ul className="mt-7 space-y-4">
                 {col.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      to={link.to}
-                      className="link-quiet text-sm tracking-wide opacity-75 hover:opacity-100"
-                    >
-                      {link.label}
-                    </Link>
+                    {link.href ? (
+                      <a
+                        href={link.href}
+                        download="Anteniguss-Look-Book-2026.pdf"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="link-quiet text-sm tracking-wide opacity-75 hover:opacity-100"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        to={link.to}
+                        className="link-quiet text-sm tracking-wide opacity-75 hover:opacity-100"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -124,7 +156,7 @@ export function Footer() {
           <p>
             © {new Date().getFullYear()} {brand.name}. All rights reserved.
           </p>
-          <p>Addis-Ababa, ET | | </p>
+          <p>Addis-Ababa, ET</p>
         </div>
       </div>
     </footer>
