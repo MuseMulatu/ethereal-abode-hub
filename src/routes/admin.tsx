@@ -164,36 +164,28 @@ function AdminLoginScreen({ onLoginSuccess }: { onLoginSuccess: (user: AdminUser
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e?: React.FormEvent, customUser?: string, customPass?: string) => {
-    if (e) e.preventDefault();
-    const idToUse = customUser !== undefined ? customUser : identifier;
-    const passToUse = customPass !== undefined ? customPass : password;
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    if (!idToUse || !passToUse) {
-      setError("Please enter both username and password");
+    if (!identifier.trim() || !password) {
+      setError("Please enter both username/email and password.");
       return;
     }
 
     setLoading(true);
     setError(null);
     try {
-      const res = await loginAdminUser(idToUse, passToUse);
+      const res = await loginAdminUser(identifier.trim(), password);
       if (res.success && res.user) {
         onLoginSuccess(res.user);
       } else {
-        setError(res.error || "Invalid username or password");
+        setError(res.error || "Invalid username or password.");
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to authenticate");
+      setError(err?.message || "Failed to authenticate with server.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickLogin = (u: string, p: string) => {
-    setIdentifier(u);
-    setPassword(p);
-    handleLogin(undefined, u, p);
   };
 
   return (
@@ -206,8 +198,7 @@ function AdminLoginScreen({ onLoginSuccess }: { onLoginSuccess: (user: AdminUser
           <p className="eyebrow text-muted-foreground">Anteniguss Home Showroom CMS</p>
           <h1 className="display text-3xl text-foreground">Staff Portal Login</h1>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Sign in with your authorized staff credentials to manage showroom leads, product catalog,
-            and SEO design journal.
+            Enter your authorized username or email and password to access the showroom portal.
           </p>
         </div>
 
@@ -230,7 +221,7 @@ function AdminLoginScreen({ onLoginSuccess }: { onLoginSuccess: (user: AdminUser
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="admin, manager, or marketing"
+                placeholder="e.g. admin or your username"
                 className="w-full rounded border border-input bg-stone/20 py-2.5 pl-10 pr-4 text-sm focus:border-foreground focus:outline-none"
               />
             </div>
@@ -261,7 +252,7 @@ function AdminLoginScreen({ onLoginSuccess }: { onLoginSuccess: (user: AdminUser
             {loading ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                <span>Authenticating...</span>
+                <span>Verifying credentials...</span>
               </>
             ) : (
               <>
@@ -271,39 +262,6 @@ function AdminLoginScreen({ onLoginSuccess }: { onLoginSuccess: (user: AdminUser
             )}
           </button>
         </form>
-
-        {/* Quick Demo Access Pills */}
-        <div className="pt-5 border-t border-border">
-          <p className="eyebrow text-[10px] text-muted-foreground mb-2.5 text-center">
-            One-Click Staff Sign-In (For Testing)
-          </p>
-          <div className="grid grid-cols-3 gap-2 text-[11px]">
-            <button
-              type="button"
-              onClick={() => handleQuickLogin("admin", "Anteniguss2026!")}
-              className="rounded border border-border bg-stone/40 p-2.5 text-center hover:bg-stone transition-colors"
-            >
-              <span className="font-semibold block text-foreground">Super Admin</span>
-              <span className="text-[10px] text-muted-foreground">All features</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin("manager", "Manager2026!")}
-              className="rounded border border-border bg-stone/40 p-2.5 text-center hover:bg-stone transition-colors"
-            >
-              <span className="font-semibold block text-foreground">Manager</span>
-              <span className="text-[10px] text-muted-foreground">Store & Leads</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin("marketing", "Marketing2026!")}
-              className="rounded border border-border bg-stone/40 p-2.5 text-center hover:bg-stone transition-colors"
-            >
-              <span className="font-semibold block text-foreground">Marketing</span>
-              <span className="text-[10px] text-muted-foreground">SEO Journal</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

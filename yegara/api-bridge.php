@@ -91,8 +91,9 @@ try {
 // Helper to read JSON request body
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
-// Password verification helper (supports Bcrypt and SHA2-256 seed upgrade)
+// Password verification helper (verifies against PHP Bcrypt or legacy SHA-256)
 function verifyPassword($plain, $hash) {
+    if (empty($plain) || empty($hash)) return false;
     if (password_verify($plain, $hash)) return true;
     if (hash('sha256', $plain) === $hash) return true;
     return false;
@@ -150,11 +151,72 @@ switch ($action) {
             exit;
         }
 
+        // Auto-bootstrap users table if missing
+        try {
+            $pdo->query("SELECT 1 FROM users LIMIT 1");
+        } catch (Exception $e) {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `users` (
+                  `id` INT AUTO_INCREMENT PRIMARY KEY,
+                  `username` VARCHAR(60) NOT NULL UNIQUE,
+                  `email` VARCHAR(150) NOT NULL UNIQUE,
+                  `password_hash` VARCHAR(255) NOT NULL,
+                  `full_name` VARCHAR(120) NOT NULL,
+                  `role` ENUM('SUPER_ADMIN', 'STORE_MANAGER', 'MARKETING') NOT NULL DEFAULT 'STORE_MANAGER',
+                  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+                  `last_login` DATETIME NULL,
+                  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+        }
+
+        // Auto-bootstrap audit_logs table if missing
+        try {
+            $pdo->query("SELECT 1 FROM audit_logs LIMIT 1");
+        } catch (Exception $e) {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `audit_logs` (
+                  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+                  `user_id` INT NULL,
+                  `user_name` VARCHAR(60) NULL,
+                  `user_role` VARCHAR(30) NULL,
+                  `action` VARCHAR(60) NOT NULL,
+                  `target` VARCHAR(150) NULL,
+                  `details` TEXT NULL,
+                  `ip_address` VARCHAR(45) NULL,
+                  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  INDEX `idx_action` (`action`),
+                  INDEX `idx_created` (`created_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+        }
+
         $stmt = $pdo->prepare("SELECT * FROM users WHERE (username = ? OR email = ?) LIMIT 1");
         $stmt->execute([$identifier, $identifier]);
         $user = $stmt->fetch();
 
-        if (!$user || !verifyPassword($password, $user['password_hash'])) {
+        // If no user exists and table is completely empty, initialize default super admin
+        if (!$user) {
+            $count = (int)$pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+            if ($count === 0 && (strtolower($identifier) === 'admin' || strtolower($identifier) === 'admin@anteniguss.com') && $password === 'Anteniguss2026!') {
+                $hash = password_hash('Anteniguss2026!', PASSWORD_BCRYPT);
+                $ins = $pdo->prepare("INSERT INTO users (username, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, 1)");
+                $ins->execute(['admin', 'admin@anteniguss.com', $hash, 'Super Admin', 'SUPER_ADMIN']);
+                $newId = $pdo->lastInsertId();
+                $user = [
+                    'id' => $newId,
+                    'username' => 'admin',
+                    'email' => 'admin@anteniguss.com',
+                    'full_name' => 'Super Admin',
+                    'role' => 'SUPER_ADMIN',
+                    'is_active' => 1,
+                    'password_hash' => $hash
+                ];
+            }
+        }
+
+        if (!$user || !verifyPassword($password, $user['password_hash'] ?? '')) {
             http_response_code(401);
             echo json_encode(['success' => false, 'error' => 'Invalid username/email or password']);
             exit;
@@ -166,8 +228,8 @@ switch ($action) {
             exit;
         }
 
-        // If password was stored as sha256 seed, automatically upgrade to standard Bcrypt hash
-        if (strpos($user['password_hash'], '$2y$') !== 0) {
+        // Upgrade password hash to standard Bcrypt if not already
+        if (empty($user['password_hash']) || strpos($user['password_hash'], '$2y$') !== 0) {
             $newBcrypt = password_hash($password, PASSWORD_BCRYPT);
             $upStmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
             $upStmt->execute([$newBcrypt, $user['id']]);
@@ -212,7 +274,7 @@ switch ($action) {
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
 
-        if (!$user || !verifyPassword($currentPass, $user['password_hash'])) {
+        if (!$user || !verifyPassword($currentPass, $user['password_hash'] ?? '')) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Current password is incorrect']);
             exit;

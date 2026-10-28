@@ -979,74 +979,34 @@ export async function loginAdminUser(
   username_or_email: string,
   password: string,
 ): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
-  if (BRIDGE_URL) {
-    try {
-      const res = await fetch(`${BRIDGE_URL}?action=login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username_or_email, password }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
-        setCurrentUser(data.user);
-        return { success: true, user: data.user };
-      }
-      return { success: false, error: data.error || "Invalid username or password" };
-    } catch (e) {
-      console.warn("API Bridge login failed, trying fallback check:", e);
-    }
+  if (!BRIDGE_URL) {
+    return { success: false, error: "Authentication server endpoint is not configured." };
   }
 
-  // Local fallback for offline/development use
-  const fallbackUsers: Record<string, { pass: string; user: AdminUser }> = {
-    admin: {
-      pass: "Anteniguss2026!",
-      user: {
-        id: 1,
-        username: "admin",
-        email: "admin@anteniguss.com",
-        full_name: "Super Admin",
-        role: "SUPER_ADMIN",
-        is_active: true,
-      },
-    },
-    manager: {
-      pass: "Manager2026!",
-      user: {
-        id: 2,
-        username: "manager",
-        email: "manager@anteniguss.com",
-        full_name: "Showroom Manager",
-        role: "STORE_MANAGER",
-        is_active: true,
-      },
-    },
-    marketing: {
-      pass: "Marketing2026!",
-      user: {
-        id: 3,
-        username: "marketing",
-        email: "marketing@anteniguss.com",
-        full_name: "Editorial Marketing",
-        role: "MARKETING",
-        is_active: true,
-      },
-    },
-  };
+  try {
+    const res = await fetch(`${BRIDGE_URL}?action=login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username_or_email: username_or_email.trim(), password }),
+    });
 
-  const idKey = username_or_email.toLowerCase();
-  for (const key of Object.keys(fallbackUsers)) {
-    const entry = fallbackUsers[key];
-    if (
-      (key === idKey || entry.user.email.toLowerCase() === idKey) &&
-      password === entry.pass
-    ) {
-      setCurrentUser(entry.user);
-      return { success: true, user: entry.user };
+    const data = await res.json();
+    if (res.ok && data.success && data.user) {
+      setCurrentUser(data.user);
+      return { success: true, user: data.user };
     }
-  }
 
-  return { success: false, error: "Invalid username/email or password" };
+    return {
+      success: false,
+      error: data.error || "Invalid username or password.",
+    };
+  } catch (e) {
+    console.error("API Bridge login error:", e);
+    return {
+      success: false,
+      error: "Unable to reach the authentication server. Please check your internet connection.",
+    };
+  }
 }
 
 export async function changeUserPassword(
