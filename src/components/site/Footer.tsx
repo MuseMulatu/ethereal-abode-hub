@@ -16,6 +16,7 @@ const columns: FooterColumn[] = [
   {
     heading: "Collections",
     links: [
+      { to: "/shop", label: "Furniture Catalog" },
       { to: "/soft-furnishings", label: "Sofas & Armchairs" },
       { to: "/kitchen", label: "Dining & Tables" },
       { to: "/kids", label: "Bedroom & Living" },
@@ -34,8 +35,8 @@ const columns: FooterColumn[] = [
     heading: "Client Care",
     links: [
       { to: "/contact", label: "Contact Us" },
-      { to: "/contact", label: "Find Support" },
       { to: "/contact", label: "Delivery & Setup" },
+      { to: "/admin", label: "Showroom Admin Portal" },
     ],
   },
 ];

@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import { Reveal } from "@/components/site/Reveal";
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { featuredPost, posts } from "@/data/site";
+import { getBlogPosts, getDynamicBlogPosts, type DynamicBlogPost } from "@/lib/cms-store";
 
 export const Route = createFileRoute("/blog")({
   head: () => ({
@@ -24,6 +26,15 @@ export const Route = createFileRoute("/blog")({
 });
 
 function Journal() {
+  const [dynamicPosts, setDynamicPosts] = useState<DynamicBlogPost[]>([]);
+
+  useEffect(() => {
+    setDynamicPosts(getDynamicBlogPosts());
+    getBlogPosts().then((items) => {
+      if (items && items.length > 0) setDynamicPosts(items);
+    });
+  }, []);
+
   return (
     <>
       <section className="mx-auto max-w-[110rem] px-6 pt-40 pb-16 sm:px-10 lg:px-16 lg:pt-52">
@@ -65,6 +76,37 @@ function Journal() {
           </article>
         </Reveal>
       </section>
+
+      {/* Dynamic Published Posts (if any created in Admin) */}
+      {dynamicPosts.length > 0 && (
+        <section className="border-t border-border bg-background py-20">
+          <div className="mx-auto max-w-[110rem] px-6 sm:px-10 lg:px-16">
+            <Reveal>
+              <SectionHeader eyebrow="Latest Editions" title="Recent Essays" />
+            </Reveal>
+            <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+              {dynamicPosts.map((post) => (
+                <article
+                  key={post.slug}
+                  className="group border border-border p-6 rounded-lg bg-stone/20"
+                >
+                  <span className="eyebrow block text-muted-foreground">{post.category}</span>
+                  <h3 className="display mt-3 text-2xl text-foreground">{post.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground line-clamp-3">
+                    {post.excerpt || post.content.slice(0, 150)}
+                  </p>
+                  <p className="mt-6 text-xs text-muted-foreground uppercase tracking-widest">
+                    Published{" "}
+                    {post.published_at
+                      ? new Date(post.published_at).toLocaleDateString()
+                      : "Recently"}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Archive grid */}
       <section className="border-t border-border bg-stone">

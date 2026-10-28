@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download, Hammer, MessageCircle, Ruler, Truck } from "lucide-react";
+import { Download, Hammer, MessageCircle, Ruler, Sparkles, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { HeroBanner } from "@/components/site/HeroBanner";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Reveal } from "@/components/site/Reveal";
 import { SectionHeader } from "@/components/site/SectionHeader";
-import { brand, catalogueSofas, images, posts } from "@/data/site";
+import { brand, catalogueSofas, images, posts, type Product } from "@/data/site";
+import { fetchSiteSettings, getProducts, getSiteSettings } from "@/lib/cms-store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -100,19 +102,57 @@ const trustFeatures = [
 ];
 
 function Home() {
+  const [settings, setSettings] = useState(getSiteSettings());
+  const [topPickProducts, setTopPickProducts] = useState<Product[]>(catalogueSofas.slice(0, 6));
+
+  useEffect(() => {
+    setSettings(getSiteSettings());
+    fetchSiteSettings().then((s) => {
+      if (s) setSettings(s);
+    });
+    const handler = () => setSettings(getSiteSettings());
+    window.addEventListener("ante-settings-updated", handler);
+    return () => window.removeEventListener("ante-settings-updated", handler);
+  }, []);
+
+  useEffect(() => {
+    getProducts({ top_picks: true }).then((items) => {
+      if (items && items.length > 0) {
+        setTopPickProducts(
+          items.map((bp) => ({
+            id: String(bp.id),
+            title: bp.title,
+            amharicName: bp.amharic_name || undefined,
+            category: bp.category,
+            seatingCapacity: bp.seating_capacity || undefined,
+            dimensions: bp.dimensions || undefined,
+            description: bp.description || undefined,
+            detail: bp.detail || `${bp.seating_capacity || ""} · ${bp.dimensions || ""}`,
+            price: bp.price_display,
+            image: bp.image_url,
+            span: bp.span || "normal",
+          })),
+        );
+      }
+    });
+  }, []);
+
   return (
     <>
       {/* Hero Banner */}
       <HeroBanner
         variant="card"
-        image={images.heroImg5171}
-        amharicEyebrow="አንተ፡ንጉስ · Addis Ababa"
-        headline="Furniture for the modern Ethiopian home."
-        sub="Sofas, armchairs, dining sets and beds, made in Addis Ababa in the size and fabric you choose."
-        ctaLabel="Shop sofas"
-        ctaTo="/soft-furnishings"
-        secondaryCtaLabel="Shop all"
-        secondaryCtaTo="/soft-furnishings"
+        image={settings.hero?.backgroundImage || images.heroImg5171}
+        amharicEyebrow={settings.hero?.kicker || "አንተ፡ንጉስ · Addis Ababa"}
+        headline={settings.hero?.headline || "Furniture for the modern Ethiopian home."}
+        sub={
+          settings.hero?.subheadline ||
+          "Sofas, armchairs, dining sets and beds, made in Addis Ababa in the size and fabric you choose."
+        }
+        ctaLabel="Browse Catalog"
+        ctaTo="/shop"
+        secondaryCtaLabel="Custom Order"
+        secondaryCtaTo="/shop"
       />
 
       {/* Trust row — 4-column grid with Lucide icons */}
@@ -189,7 +229,7 @@ function Home() {
         </div>
 
         <div className="marquee-track mt-14 flex w-max gap-6 pl-6 lg:gap-8 lg:pl-16">
-          {[...catalogueSofas.slice(0, 6), ...catalogueSofas.slice(0, 6)].map((product, i) => (
+          {[...topPickProducts, ...topPickProducts].map((product, i) => (
             <div key={`${product.id}-${i}`} className="w-[78vw] sm:w-[42vw] lg:w-[26vw]">
               <ProductCard product={product} ratio="portrait" />
             </div>
@@ -198,70 +238,71 @@ function Home() {
       </section>
 
       {/* Made to order — split promo */}
-      <section id="custom" className="mx-auto max-w-[110rem] px-4 py-16 sm:px-6 sm:py-24 lg:px-16">
-        <div className="grid overflow-hidden border border-border/50 bg-stone lg:grid-cols-[1.2fr_1fr]">
-          {/* Left: image */}
-          <div className="relative min-h-[340px] overflow-hidden bg-muted sm:min-h-[440px] lg:min-h-[500px]">
-            <img
-              src={images.curvedSectional}
-              alt="Cream curved sectional sofa"
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover object-[center_62%] transition-transform duration-700 hover:scale-105"
-            />
-          </div>
+      {(() => {
+        const mto = settings.made_to_order || (settings as any).madeToOrder;
+        return (
+          <section id="custom" className="mx-auto max-w-[110rem] px-4 py-16 sm:px-6 sm:py-24 lg:px-16">
+            <div className="grid overflow-hidden border border-border/50 bg-stone lg:grid-cols-[1.2fr_1fr]">
+              {/* Left: image */}
+              <div className="relative min-h-[340px] overflow-hidden bg-muted sm:min-h-[440px] lg:min-h-[500px]">
+                <img
+                  src={mto?.imageUrl || images.curvedSectional}
+                  alt="Cream curved sectional sofa"
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover object-[center_62%] transition-transform duration-700 hover:scale-105"
+                />
+              </div>
 
-          {/* Right: text content */}
-          <div className="flex flex-col justify-center gap-4 p-8 sm:gap-5 sm:p-12 lg:p-16">
-            <span className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              Made to order
-            </span>
-            <h2 className="text-balance text-2xl font-semibold leading-[1.2] tracking-tight text-foreground sm:text-3xl lg:text-[2.2rem]">
-              Your size. Your fabric. Made in Addis.
-            </h2>
-            <p className="max-w-[42ch] text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Every sofa, chair and table is built by our own production team. Tell us your room
-              size and pick the fabric and colour.
-            </p>
-            <ul className="m-0 my-2 grid list-none gap-2.5 p-0 text-sm text-foreground/90 sm:text-[0.92rem]">
-              <li className="flex items-start gap-3">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-foreground" />
-                <span>Custom orders ready in about 20–30 days</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-foreground" />
-                <span>See and feel fabrics at the showroom</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-foreground" />
-                <span>Delivery and setup by our team</span>
-              </li>
-            </ul>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <a
-                href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
-                  "Hello Anteniguss Home, I'd like a custom size or fabric.",
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-sm font-semibold text-background transition-opacity hover:opacity-85"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Start a custom order
-              </a>
-              <a
-                href="/anteniguss-look-book-2026.pdf"
-                download="Anteniguss-Look-Book-2026.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 border border-foreground bg-transparent px-6 py-3.5 text-sm font-semibold text-foreground transition-opacity hover:opacity-85"
-              >
-                <Download className="h-4 w-4" />
-                Download 2026 Look Book
-              </a>
+              {/* Right: text content */}
+              <div className="flex flex-col justify-center gap-4 p-8 sm:gap-5 sm:p-12 lg:p-16">
+                <span className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  Made to order
+                </span>
+                <h2 className="text-balance text-2xl font-semibold leading-[1.2] tracking-tight text-foreground sm:text-3xl lg:text-[2.2rem]">
+                  {mto?.title || "Your size. Your fabric. Made in Addis."}
+                </h2>
+                <p className="max-w-[42ch] text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  {mto?.description ||
+                    "Every sofa, chair and table is built by our own production team. Tell us your room size and pick the fabric and colour."}
+                </p>
+                <ul className="m-0 my-2 grid list-none gap-2.5 p-0 text-sm text-foreground/90 sm:text-[0.92rem]">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-foreground" />
+                    <span>{mto?.bullet1 || "Custom orders ready in about 20–30 days"}</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-foreground" />
+                    <span>{mto?.bullet2 || "See and feel fabrics at the showroom"}</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-foreground" />
+                    <span>{mto?.bullet3 || "Delivery and setup by our team"}</span>
+                  </li>
+                </ul>
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <Link
+                    to="/shop"
+                    className="inline-flex items-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-sm font-semibold text-background transition-opacity hover:opacity-85"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Explore Catalog & Quote
+                  </Link>
+                  <a
+                    href="/anteniguss-look-book-2026.pdf"
+                    download="Anteniguss-Look-Book-2026.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 border border-foreground bg-transparent px-6 py-3.5 text-sm font-semibold text-foreground transition-opacity hover:opacity-85"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download 2026 Look Book
+                  </a>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
+        );
+      })()}
 
       {/* Shop by category */}
       <section className="mx-auto max-w-[110rem] border-t border-border px-6 py-20 sm:px-10 lg:px-16 lg:py-28">
@@ -342,7 +383,7 @@ function Home() {
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div className="relative aspect-[4/3] overflow-hidden border border-border/50 bg-stone">
               <img
-                src={images.bunaGuests}
+                src={settings.showroom?.imageUrl || images.bunaGuests}
                 alt="Visitors welcomed at Anteniguss Home showroom, Abkem Tower"
                 loading="lazy"
                 className="h-full w-full object-cover"
@@ -354,11 +395,11 @@ function Home() {
                   Showroom
                 </span>
                 <h2 className="text-3xl font-semibold leading-[1.2] tracking-tight text-foreground sm:text-4xl lg:text-[2.6rem]">
-                  Visit our showroom
+                  {settings.showroom?.headline || "Visit our showroom"}
                 </h2>
                 <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  Two floors of sofas, dining and bedroom furniture. Sit on every piece and feel the
-                  fabrics before you order.
+                  {settings.showroom?.subheadline ||
+                    "Two floors of sofas, dining and bedroom furniture. Sit on every piece and feel the fabrics before you order."}
                 </p>
 
                 <dl className="grid gap-4 border-y border-border/70 py-6 text-sm sm:text-base">
@@ -367,7 +408,7 @@ function Home() {
                       Address
                     </dt>
                     <dd className="mt-1 font-medium text-foreground">
-                      {brand.address}
+                      {settings.showroom?.address || brand.address}
                       <span
                         className="mt-0.5 block text-xs text-muted-foreground sm:text-sm"
                         lang="am"
@@ -380,13 +421,17 @@ function Home() {
                     <dt className="text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">
                       Phone
                     </dt>
-                    <dd className="mt-1 font-medium text-foreground">{brand.phone}</dd>
+                    <dd className="mt-1 font-medium text-foreground">
+                      {settings.showroom?.phone || brand.phone}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">
                       Email
                     </dt>
-                    <dd className="mt-1 font-medium text-foreground">{brand.email}</dd>
+                    <dd className="mt-1 font-medium text-foreground">
+                      {settings.showroom?.email || brand.email}
+                    </dd>
                   </div>
                 </dl>
 

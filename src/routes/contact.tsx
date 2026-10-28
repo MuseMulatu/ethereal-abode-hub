@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchSiteSettings, getSiteSettings, submitCustomerInquiry } from "@/lib/cms-store";
 
 import { Reveal } from "@/components/site/Reveal";
 import { SectionHeader } from "@/components/site/SectionHeader";
@@ -45,6 +46,54 @@ const details = [
 
 function Contact() {
   const [sent, setSent] = useState(false);
+  const [inquiryRef, setInquiryRef] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [settings, setSettings] = useState(getSiteSettings());
+
+  useEffect(() => {
+    fetchSiteSettings().then((s) => {
+      if (s) setSettings(s);
+    });
+  }, []);
+
+  const phoneDisplay = settings.showroom?.phone || brand.phone;
+  const emailDisplay = settings.showroom?.email || brand.email;
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const name = (formData.get("name") as string) || "";
+    const email = (formData.get("email") as string) || "";
+    const phone = (formData.get("phone") as string) || email;
+    const message = (formData.get("message") as string) || "";
+
+    try {
+      const res = await submitCustomerInquiry({
+        customer_name: name,
+        customer_phone: phone,
+        customer_whatsapp: phone,
+        customer_notes: `[Contact Form Enquiry] Email: ${email} | Project: ${message}`,
+        items: [
+          {
+            product_name: "General Showroom Inquiry",
+            quantity: 1,
+          },
+        ],
+      });
+      if (res.success) {
+        setInquiryRef(res.inquiry_number);
+        setSent(true);
+        form.reset();
+      }
+    } catch (err) {
+      console.error(err);
+      setSent(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const whatsappHref = `https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
     `Hello ${brand.name} — I would like to arrange a showroom visit.`,
   )}`;
@@ -147,7 +196,7 @@ function Contact() {
                 className="mt-14 space-y-10"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  setSent(true);
+                  handleSubmit(e);
                 }}
               >
                 <Field label="Full name" name="name" />
@@ -169,8 +218,13 @@ function Contact() {
                   type="submit"
                   className="eyebrow border border-foreground px-10 py-5 transition-colors duration-700 hover:bg-ink hover:text-ink-foreground"
                 >
-                  Send Enquiry
+                  {isSubmitting ? "Sending Enquiry..." : "Send Enquiry"}
                 </button>
+                {inquiryRef && (
+                  <p className="mt-2 text-xs font-mono font-semibold text-foreground">
+                    Reference: {inquiryRef}
+                  </p>
+                )}
                 {sent ? (
                   <p className="text-sm tracking-wide text-muted-foreground">
                     Thank you — the concierge will reply within one working day.

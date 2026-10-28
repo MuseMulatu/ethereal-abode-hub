@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import { HeroBanner } from "@/components/site/HeroBanner";
 import { Reveal } from "@/components/site/Reveal";
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { brand, images } from "@/data/site";
+import { fetchSiteSettings, getSiteSettings, type SiteSectionAbout } from "@/lib/cms-store";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -48,12 +50,25 @@ const principles = [
 ];
 
 function About() {
+  const [settings, setSettings] = useState(getSiteSettings());
+
+  useEffect(() => {
+    fetchSiteSettings().then((s) => {
+      if (s) setSettings(s);
+    });
+    const handler = () => setSettings(getSiteSettings());
+    window.addEventListener("ante-settings-updated", handler);
+    return () => window.removeEventListener("ante-settings-updated", handler);
+  }, []);
+
+  const about = (settings.about_page || (settings as any).aboutPage) as SiteSectionAbout | undefined;
+
   return (
     <>
       <HeroBanner
         image={images.heroLivingRoom}
         eyebrow="Anteniguss Home · Addis Ababa"
-        headline="Furniture for the modern Ethiopian home."
+        headline={about?.title || "Furniture for the modern Ethiopian home."}
         height="tall"
         align="center"
       />
@@ -65,15 +80,13 @@ function About() {
           </Reveal>
           <Reveal delay={120} className="lg:col-span-8">
             <p className="display text-[1.75rem] leading-[1.35] sm:text-4xl lg:text-[2.6rem] lg:leading-[1.3]">
-              Anteniguss Home was established in Addis Ababa to design and craft distinctive,
-              high-quality furniture tailored specifically for Ethiopian homes.
+              {about?.title ||
+                "Anteniguss Home was established in Addis Ababa to design and craft distinctive, high-quality furniture tailored specifically for Ethiopian homes."}
             </p>
             <div className="mt-14 grid gap-10 sm:grid-cols-2">
               <p className="text-sm leading-relaxed text-muted-foreground">
-                From initial sketch and full-scale prototype to the final hand-finished piece, our
-                master craftsmen take immense pride in every joint, cushion, and stitch. We believe
-                that furniture should not just fill a room—it should create the foundation for your
-                family's life stories.
+                {about?.story ||
+                  "From initial sketch and full-scale prototype to the final hand-finished piece, our master craftsmen take immense pride in every joint, cushion, and stitch. We believe that furniture should not just fill a room—it should create the foundation for your family's life stories."}
               </p>
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Our two-floor showroom at Meskel Flower, Abkem Tower lets you experience full living
@@ -115,7 +128,7 @@ function About() {
         <div className="grid lg:grid-cols-2">
           <div className="h-[60vh] overflow-hidden lg:h-auto lg:min-h-[38rem]">
             <img
-              src={images.clientHomeLiving}
+              src={about?.atelierImage || images.clientHomeLiving}
               alt="Living room interior designed with Anteniguss Home furniture"
               loading="lazy"
               className="h-full w-full object-cover"
