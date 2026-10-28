@@ -16,7 +16,9 @@ interface QuoteBagDrawerProps {
 }
 
 export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
-  const [items, setItems] = useState<BagItem[]>([]);
+  const [items, setItems] = useState<BagItem[]>(() =>
+    typeof window !== "undefined" ? getQuoteBag() : [],
+  );
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerWhatsapp, setCustomerWhatsapp] = useState("");
@@ -57,7 +59,9 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
         subcity_area: subcityArea,
         customer_notes: customerNotes,
         items: items.map((i) => ({
-          product_name: i.productName,
+          product_name: i.customNotes
+            ? `${i.productName} (Custom: ${i.customNotes})`
+            : i.productName,
           selected_wood: i.selectedWood,
           selected_fabric: i.selectedFabric,
           quantity: i.quantity,
@@ -79,7 +83,9 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
     const itemsText = items
       .map(
         (i, idx) =>
-          `${idx + 1}. *${i.productName}* (${i.selectedFabric}, ${i.selectedWood}) x${i.quantity}`,
+          `${idx + 1}. *${i.productName}* (${i.selectedFabric}, ${i.selectedWood}) x${i.quantity}${
+            i.customNotes ? `\n   Custom: ${i.customNotes}` : ""
+          }`,
       )
       .join("\n");
 
@@ -198,6 +204,12 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
                         {item.dimensions && (
                           <p className="text-[11px] text-muted-foreground truncate">
                             {item.dimensions}
+                          </p>
+                        )}
+                        {item.customNotes && (
+                          <p className="mt-1 rounded bg-stone/80 border border-border/60 px-2 py-0.5 text-[11px] text-foreground font-mono">
+                            <span className="font-semibold text-muted-foreground not-mono">Note: </span>
+                            {item.customNotes}
                           </p>
                         )}
                       </div>

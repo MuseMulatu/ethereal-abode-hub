@@ -106,6 +106,42 @@ CREATE TABLE IF NOT EXISTS `posts` (
   INDEX idx_status (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------
+-- 6. Users Table (Authentication & Role-Based Permissions)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(64) NOT NULL UNIQUE,
+  `email` VARCHAR(191) NOT NULL UNIQUE,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `full_name` VARCHAR(191) NOT NULL,
+  `role` ENUM('SUPER_ADMIN', 'STORE_MANAGER', 'MARKETING') NOT NULL DEFAULT 'STORE_MANAGER',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `last_login` DATETIME DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_role (`role`),
+  INDEX idx_active (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- 7. Audit Trail Logs Table (Action Accountability for Major Operations)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `audit_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT DEFAULT NULL,
+  `user_name` VARCHAR(191) NOT NULL,
+  `user_role` VARCHAR(64) NOT NULL,
+  `action` VARCHAR(64) NOT NULL,
+  `target_type` VARCHAR(64) NOT NULL,
+  `target_id` VARCHAR(191) DEFAULT NULL,
+  `details` TEXT DEFAULT NULL,
+  `ip_address` VARCHAR(64) DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_action (`action`),
+  INDEX idx_created (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =====================================================================
 -- SEED DATA: Complete Anteniguss Look Book 2026 Products & Sections
 -- =====================================================================
@@ -204,3 +240,17 @@ ON DUPLICATE KEY UPDATE
   `target_keyword` = VALUES(`target_keyword`),
   `meta_title` = VALUES(`meta_title`),
   `meta_description` = VALUES(`meta_description`);
+
+-- ---------------------------------------------------------------------
+-- Seed Initial Staff Accounts
+-- Passwords:
+-- admin:     Anteniguss2026!
+-- manager:   Manager2026!
+-- marketing: Marketing2026!
+-- ---------------------------------------------------------------------
+INSERT INTO `users` (`username`, `email`, `password_hash`, `full_name`, `role`, `is_active`)
+VALUES
+('admin', 'admin@anteniguss.com', SHA2('Anteniguss2026!', 256), 'Super Admin', 'SUPER_ADMIN', 1),
+('manager', 'manager@anteniguss.com', SHA2('Manager2026!', 256), 'Showroom Manager', 'STORE_MANAGER', 1),
+('marketing', 'marketing@anteniguss.com', SHA2('Marketing2026!', 256), 'Editorial Marketing', 'MARKETING', 1)
+ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`), `role` = VALUES(`role`), `is_active` = VALUES(`is_active`);

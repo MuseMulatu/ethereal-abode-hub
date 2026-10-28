@@ -79,34 +79,23 @@ export function Navbar() {
             />
           </Link>
 
-          <nav className="hidden items-center gap-6 lg:flex">
+          <nav className="hidden items-center gap-7 lg:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="eyebrow link-quiet opacity-80 transition-opacity duration-500 hover:opacity-100"
-                activeProps={{ className: "opacity-100" }}
+                className="eyebrow link-quiet opacity-80 transition-opacity duration-500 hover:opacity-100 text-[13px] tracking-wider"
+                activeProps={{ className: "opacity-100 font-semibold" }}
               >
                 {link.label}
               </Link>
             ))}
 
-            <a
-              href="/anteniguss-look-book-2026.pdf"
-              download="Anteniguss-Look-Book-2026.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="eyebrow inline-flex items-center gap-2 border border-current px-3 py-1.5 opacity-85 transition-opacity hover:opacity-100 text-xs"
-            >
-              <Download className="h-3 w-3" />
-              <span>Look Book</span>
-            </a>
-
             {/* Quote Bag Button */}
             <button
               type="button"
               onClick={() => setBagOpen(true)}
-              className="eyebrow inline-flex items-center gap-2 rounded border border-current px-3.5 py-1.5 transition-all hover:bg-current/10"
+              className="eyebrow inline-flex items-center gap-2 rounded border border-current px-3.5 py-1.5 transition-all hover:bg-current/10 text-xs ml-2"
               title="Open Bespoke Quote Bag"
             >
               <ShoppingBag className="h-3.5 w-3.5" />

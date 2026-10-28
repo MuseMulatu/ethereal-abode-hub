@@ -38,11 +38,12 @@ define('DB_PASS', 'SyMepPdGM8J6SCgHPByB');
 define('API_SECRET_KEY', 'anteniguss_secure_key_2026_xyz');
 
 // --------------------------------------------------------------------------
-// 3. AUTHENTICATION
+// 3. AUTHENTICATION & SECURITY
 // --------------------------------------------------------------------------
 $action = $_GET['action'] ?? '';
 $publicActions = [
     'ping',
+    'login',
     'get_settings',
     'get_section',
     'get_products',
@@ -90,6 +91,35 @@ try {
 // Helper to read JSON request body
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
+// Password verification helper (supports Bcrypt and SHA2-256 seed upgrade)
+function verifyPassword($plain, $hash) {
+    if (password_verify($plain, $hash)) return true;
+    if (hash('sha256', $plain) === $hash) return true;
+    return false;
+}
+
+// Audit trail logging helper
+function logAudit($pdo, $userName, $userRole, $action, $targetType, $targetId, $details = null) {
+    try {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $stmt = $pdo->prepare("
+            INSERT INTO audit_logs (user_name, user_role, action, target_type, target_id, details, ip_address, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+        ");
+        $stmt->execute([
+            $userName ?: 'System / Admin',
+            $userRole ?: 'SUPER_ADMIN',
+            $action,
+            $targetType,
+            $targetId ? (string)$targetId : null,
+            is_array($details) ? json_encode($details, JSON_UNESCAPED_UNICODE) : $details,
+            $ip
+        ]);
+    } catch (Exception $e) {
+        // Silently pass so logging never breaks primary operation
+    }
+}
+
 // --------------------------------------------------------------------------
 // 5. API ROUTER
 // --------------------------------------------------------------------------
@@ -106,6 +136,220 @@ switch ($action) {
             'php_version' => PHP_VERSION,
             'timestamp' => date('c'),
         ]);
+        break;
+
+    // =========================================================================
+    // AUTHENTICATION & USERS (Role-Based Permissions & Profile)
+    // =========================================================================
+    case 'login':
+        $identifier = trim($input['username_or_email'] ?? '');
+        $password = $input['password'] ?? '';
+        if (!$identifier || !$password) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Username/Email and Password are required']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE (username = ? OR email = ?) LIMIT 1");
+        $stmt->execute([$identifier, $identifier]);
+        $user = $stmt->fetch();
+
+        if (!$user || !verifyPassword($password, $user['password_hash'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Invalid username/email or password']);
+            exit;
+        }
+
+        if (!$user['is_active']) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Your account has been deactivated. Please contact Super Admin.']);
+            exit;
+        }
+
+        // If password was stored as sha256 seed, automatically upgrade to standard Bcrypt hash
+        if (strpos($user['password_hash'], '$2y$') !== 0) {
+            $newBcrypt = password_hash($password, PASSWORD_BCRYPT);
+            $upStmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+            $upStmt->execute([$newBcrypt, $user['id']]);
+        }
+
+        $upLogin = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
+        $upLogin->execute([$user['id']]);
+
+        logAudit($pdo, $user['full_name'], $user['role'], 'LOGIN', 'user', $user['id'], 'User logged in successfully');
+
+        echo json_encode([
+            'success' => true,
+            'token' => API_SECRET_KEY,
+            'user' => [
+                'id' => (int)$user['id'],
+                'username' => $user['username'],
+                'email' => $user['email'],
+                'full_name' => $user['full_name'],
+                'role' => $user['role'],
+            ]
+        ]);
+        break;
+
+    case 'change_password':
+        $userId = $input['user_id'] ?? null;
+        $currentPass = $input['current_password'] ?? '';
+        $newPass = $input['new_password'] ?? '';
+
+        if (!$userId || !$currentPass || !$newPass) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'User ID, current password, and new password are required']);
+            exit;
+        }
+
+        if (strlen($newPass) < 6) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'New password must be at least 6 characters long']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+
+        if (!$user || !verifyPassword($currentPass, $user['password_hash'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Current password is incorrect']);
+            exit;
+        }
+
+        $newHash = password_hash($newPass, PASSWORD_BCRYPT);
+        $upStmt = $pdo->prepare("UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?");
+        $upStmt->execute([$newHash, $userId]);
+
+        logAudit($pdo, $user['full_name'], $user['role'], 'CHANGE_PASSWORD', 'user', $userId, 'User changed account password');
+
+        echo json_encode(['success' => true, 'message' => 'Password updated successfully']);
+        break;
+
+    case 'get_users':
+        $stmt = $pdo->query("SELECT id, username, email, full_name, role, is_active, last_login, created_at FROM users ORDER BY id ASC");
+        $users = $stmt->fetchAll();
+        foreach ($users as &$u) {
+            $u['id'] = (int)$u['id'];
+            $u['is_active'] = (bool)$u['is_active'];
+        }
+        echo json_encode(['success' => true, 'users' => $users]);
+        break;
+
+    case 'create_user':
+        $username = strtolower(trim($input['username'] ?? ''));
+        $email = strtolower(trim($input['email'] ?? ''));
+        $fullName = trim($input['full_name'] ?? '');
+        $role = $input['role'] ?? 'STORE_MANAGER';
+        $password = $input['password'] ?? '';
+
+        if (!$username || !$email || !$fullName || !$password) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Username, Email, Full Name, and Password are required']);
+            exit;
+        }
+
+        if (!in_array($role, ['SUPER_ADMIN', 'STORE_MANAGER', 'MARKETING'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid role specified']);
+            exit;
+        }
+
+        $hash = password_hash($password, PASSWORD_BCRYPT);
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO users (username, email, password_hash, full_name, role, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, 1, NOW())
+            ");
+            $stmt->execute([$username, $email, $hash, $fullName, $role]);
+            $newId = $pdo->lastInsertId();
+
+            $adminName = $input['auth_user_name'] ?? 'Super Admin';
+            logAudit($pdo, $adminName, 'SUPER_ADMIN', 'CREATE_USER', 'user', $newId, "Created staff user: $username ($fullName) as $role");
+
+            echo json_encode([
+                'success' => true,
+                'user_id' => (int)$newId,
+                'message' => "User account for $fullName created successfully"
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Username or Email is already registered']);
+        }
+        break;
+
+    case 'update_user':
+        $userId = $input['id'] ?? null;
+        if (!$userId) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'User ID is required']);
+            exit;
+        }
+
+        $fields = [];
+        $params = [];
+        if (isset($input['full_name'])) {
+            $fields[] = "`full_name` = ?";
+            $params[] = $input['full_name'];
+        }
+        if (isset($input['role']) && in_array($input['role'], ['SUPER_ADMIN', 'STORE_MANAGER', 'MARKETING'])) {
+            $fields[] = "`role` = ?";
+            $params[] = $input['role'];
+        }
+        if (isset($input['is_active'])) {
+            $fields[] = "`is_active` = ?";
+            $params[] = (int)$input['is_active'];
+        }
+        if (!empty($input['password'])) {
+            $fields[] = "`password_hash` = ?";
+            $params[] = password_hash($input['password'], PASSWORD_BCRYPT);
+        }
+
+        if (empty($fields)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'No fields to update']);
+            exit;
+        }
+
+        $params[] = $userId;
+        $sql = "UPDATE users SET " . implode(", ", $fields) . ", updated_at = NOW() WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        $adminName = $input['auth_user_name'] ?? 'Super Admin';
+        logAudit($pdo, $adminName, 'SUPER_ADMIN', 'UPDATE_USER', 'user', $userId, 'Updated user attributes or status');
+
+        echo json_encode(['success' => true, 'message' => 'User account updated successfully']);
+        break;
+
+    case 'delete_user':
+        $userId = $input['id'] ?? null;
+        if (!$userId) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'User ID is required']);
+            exit;
+        }
+
+        if ((int)$userId === 1) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Cannot delete primary Super Admin account']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+
+        $adminName = $input['auth_user_name'] ?? 'Super Admin';
+        logAudit($pdo, $adminName, 'SUPER_ADMIN', 'DELETE_USER', 'user', $userId, "Deleted user ID: $userId");
+
+        echo json_encode(['success' => true, 'message' => 'User deleted successfully']);
+        break;
+
+    case 'get_audit_logs':
+        $stmt = $pdo->query("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 100");
+        $logs = $stmt->fetchAll();
+        echo json_encode(['success' => true, 'logs' => $logs]);
         break;
 
     // =========================================================================
@@ -300,6 +544,10 @@ switch ($action) {
         ]);
 
         $productId = $pdo->lastInsertId();
+        $adminName = $input['auth_user_name'] ?? 'Staff';
+        $adminRole = $input['auth_user_role'] ?? 'STORE_MANAGER';
+        logAudit($pdo, $adminName, $adminRole, 'CREATE_PRODUCT', 'product', $productId, "Created product: " . $input['title']);
+
         echo json_encode([
             'success' => true,
             'product_id' => $productId,
@@ -355,10 +603,16 @@ switch ($action) {
             exit;
         }
 
-        $params[] = $input['id'];
-        $sql = "UPDATE products SET " . implode(", ", $fields) . ", updated_at = NOW() WHERE id = ?";
+        $idOrSlug = $input['id'];
+        $params[] = $idOrSlug;
+        $params[] = $idOrSlug;
+        $sql = "UPDATE products SET " . implode(", ", $fields) . ", updated_at = NOW() WHERE id = ? OR slug = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
+
+        $adminName = $input['auth_user_name'] ?? 'Staff';
+        $adminRole = $input['auth_user_role'] ?? 'STORE_MANAGER';
+        logAudit($pdo, $adminName, $adminRole, 'UPDATE_PRODUCT', 'product', $idOrSlug, "Updated product: " . ($input['title'] ?? "ID $idOrSlug"));
 
         echo json_encode(['success' => true, 'message' => 'Product updated successfully']);
         break;
@@ -369,17 +623,22 @@ switch ($action) {
             echo json_encode(['success' => false, 'error' => 'Product ID required']);
             exit;
         }
-        // Permanently delete or soft-archive based on ?hard=1
+        $idOrSlug = $input['id'];
         $hard = isset($_GET['hard']) && $_GET['hard'] === '1';
         if ($hard) {
-            $stmt = $pdo->prepare("DELETE FROM products WHERE id = ?");
-            $stmt->execute([$input['id']]);
+            $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? OR slug = ?");
+            $stmt->execute([$idOrSlug, $idOrSlug]);
             $msg = 'Product permanently deleted';
         } else {
-            $stmt = $pdo->prepare("UPDATE products SET is_archived = 1, updated_at = NOW() WHERE id = ?");
-            $stmt->execute([$input['id']]);
+            $stmt = $pdo->prepare("UPDATE products SET is_archived = 1, updated_at = NOW() WHERE id = ? OR slug = ?");
+            $stmt->execute([$idOrSlug, $idOrSlug]);
             $msg = 'Product moved to archive';
         }
+
+        $adminName = $input['auth_user_name'] ?? 'Staff';
+        $adminRole = $input['auth_user_role'] ?? 'STORE_MANAGER';
+        logAudit($pdo, $adminName, $adminRole, 'DELETE_PRODUCT', 'product', $idOrSlug, $msg);
+
         echo json_encode(['success' => true, 'message' => $msg]);
         break;
 
@@ -483,6 +742,10 @@ switch ($action) {
         ]);
 
         $postId = $pdo->lastInsertId();
+        $adminName = $input['auth_user_name'] ?? 'Marketing';
+        $adminRole = $input['auth_user_role'] ?? 'MARKETING';
+        logAudit($pdo, $adminName, $adminRole, 'PUBLISH_POST', 'post', $postId, "Published SEO article: " . $input['title']);
+
         echo json_encode([
             'success' => true,
             'post_id' => $postId,
@@ -526,9 +789,14 @@ switch ($action) {
         }
 
         $params[] = $input['id'];
-        $sql = "UPDATE posts SET " . implode(", ", $fields) . ", updated_at = NOW() WHERE id = ?";
+        $params[] = $input['id'];
+        $sql = "UPDATE posts SET " . implode(", ", $fields) . ", updated_at = NOW() WHERE id = ? OR slug = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
+
+        $adminName = $input['auth_user_name'] ?? 'Marketing';
+        $adminRole = $input['auth_user_role'] ?? 'MARKETING';
+        logAudit($pdo, $adminName, $adminRole, 'UPDATE_POST', 'post', $input['id'], "Updated article: " . ($input['title'] ?? 'ID ' . $input['id']));
 
         echo json_encode(['success' => true, 'message' => 'Article updated successfully']);
         break;
@@ -539,8 +807,13 @@ switch ($action) {
             echo json_encode(['success' => false, 'error' => 'Post ID required']);
             exit;
         }
-        $stmt = $pdo->prepare("DELETE FROM posts WHERE id = ?");
-        $stmt->execute([$input['id']]);
+        $stmt = $pdo->prepare("DELETE FROM posts WHERE id = ? OR slug = ?");
+        $stmt->execute([$input['id'], $input['id']]);
+
+        $adminName = $input['auth_user_name'] ?? 'Marketing';
+        $adminRole = $input['auth_user_role'] ?? 'MARKETING';
+        logAudit($pdo, $adminName, $adminRole, 'DELETE_POST', 'post', $input['id'], "Deleted article: " . $input['id']);
+
         echo json_encode(['success' => true, 'message' => 'Article deleted successfully']);
         break;
 
@@ -786,7 +1059,8 @@ switch ($action) {
             'success' => false,
             'error' => 'Unknown action: ' . htmlspecialchars($action),
             'available_actions' => [
-                'ping', 'get_settings', 'get_section', 'save_settings',
+                'ping', 'login', 'change_password', 'get_users', 'create_user', 'update_user', 'delete_user', 'get_audit_logs',
+                'get_settings', 'get_section', 'save_settings',
                 'get_products', 'get_product', 'create_product', 'update_product', 'delete_product',
                 'get_posts', 'get_post', 'create_post', 'update_post', 'delete_post',
                 'submit_inquiry', 'get_inquiries', 'get_inquiry', 'update_inquiry_status', 'delete_inquiry',

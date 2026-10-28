@@ -161,7 +161,7 @@ function ShopPage() {
   return (
     <>
       {/* Hero Header */}
-      <section className="border-b border-border bg-stone/40 pt-40 pb-16 sm:px-10 sm:pt-48 lg:px-16 lg:pb-24">
+      <section className="border-b border-border bg-stone/40 pt-28 pb-8 sm:px-10 sm:pt-32 lg:px-16 lg:pb-10">
         <div className="mx-auto max-w-[110rem] px-6">
           <Reveal>
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
@@ -300,9 +300,9 @@ function ShopPage() {
       </section>
 
       {/* Product Grid */}
-      <section className="mx-auto max-w-[110rem] px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
+      <section className="mx-auto max-w-[110rem] px-6 py-8 sm:px-10 lg:px-16 lg:py-12">
         {filteredProducts.length === 0 ? (
-          <div className="my-20 text-center">
+          <div className="my-16 text-center">
             <p className="text-xl font-medium text-foreground">No pieces match your search</p>
             <p className="mt-2 text-sm text-muted-foreground">
               Try adjusting your search terms or clearing the filters.
@@ -319,31 +319,31 @@ function ShopPage() {
             </button>
           </div>
         ) : (
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredProducts.map((item, index) => (
-              <Reveal key={item.id} delay={(index % 4) * 80}>
-                <div className="group flex flex-col justify-between rounded-lg border border-border bg-stone/20 overflow-hidden transition-all duration-500 hover:border-foreground/40 hover:shadow-lg">
+              <Reveal key={item.id} delay={(index % 4) * 60}>
+                <div
+                  onClick={() => handleOpenCustomizer(item)}
+                  className="group flex flex-col justify-between rounded-lg border border-border bg-stone/20 overflow-hidden cursor-pointer transition-all duration-300 hover:border-foreground/40 hover:shadow-lg"
+                >
                   {/* Image container */}
-                  <div
-                    onClick={() => handleOpenCustomizer(item)}
-                    className="relative aspect-[4/3] cursor-pointer overflow-hidden bg-stone"
-                  >
+                  <div className="relative aspect-[4/3] overflow-hidden bg-stone">
                     <img
                       src={item.image}
                       alt={item.title}
                       loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-700 ease-cinematic group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-500 ease-cinematic group-hover:scale-[1.03]"
                     />
 
                     {/* Capacity badge */}
                     {item.seatingCapacity && (
-                      <span className="absolute top-3 left-3 rounded bg-background/90 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground border border-border">
+                      <span className="absolute top-3 left-3 rounded bg-background/90 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground border border-border pointer-events-none">
                         {item.seatingCapacity.replace(" (custom configuration)", "")}
                       </span>
                     )}
 
                     {/* Price / Quote badge */}
-                    <span className="absolute bottom-3 right-3 rounded bg-ink/80 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-ink-foreground">
+                    <span className="absolute bottom-3 right-3 rounded bg-ink/80 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-ink-foreground pointer-events-none">
                       {item.price || "Made to Order"}
                     </span>
                   </div>
@@ -365,10 +365,7 @@ function ShopPage() {
                       </div>
 
                       {/* Title & amharic */}
-                      <h3
-                        onClick={() => handleOpenCustomizer(item)}
-                        className="display mt-2.5 text-xl cursor-pointer hover:underline text-foreground"
-                      >
+                      <h3 className="display mt-2.5 text-xl hover:underline text-foreground">
                         {item.title}
                       </h3>
 
@@ -388,7 +385,10 @@ function ShopPage() {
                     <div className="mt-5 pt-4 border-t border-border flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => handleOpenCustomizer(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenCustomizer(item);
+                        }}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 rounded border border-foreground bg-foreground py-2.5 px-3 text-xs font-semibold text-background transition-opacity hover:opacity-90"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
@@ -401,6 +401,7 @@ function ShopPage() {
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="p-2.5 rounded border border-border text-muted-foreground transition-colors hover:text-foreground hover:bg-stone"
                         title="Inquire directly on WhatsApp"
                       >

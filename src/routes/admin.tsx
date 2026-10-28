@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  AlertCircle,
+  ArrowRight,
   Calendar,
+  Check,
   CheckCircle,
   Clock,
   Edit2,
@@ -9,43 +12,65 @@ import {
   Filter,
   Globe,
   HelpCircle,
+  History,
   Image as ImageIcon,
+  Key,
   Layers,
+  Lock,
+  LogOut,
+  Mail,
   MapPin,
   MessageCircle,
   Phone,
   Plus,
+  RefreshCw,
   Save,
   Search,
   Shield,
+  ShieldCheck,
   Smartphone,
   Sparkles,
   Trash2,
   Upload,
+  User,
   UserCheck,
+  UserPlus,
   Users,
+  X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { brand, catalogueSofas } from "@/data/site";
 import {
+  changeUserPassword,
   createBlogPost,
   createProduct,
+  createUser,
   deleteBlogPost,
   deleteProduct,
+  deleteUser,
   fetchSiteSettings,
+  getAuditLogs,
   getBlogPosts,
+  getCurrentUser,
   getDynamicBlogPosts,
   getInquiries,
   getProducts,
   getSiteSettings,
+  getUsers,
+  loginAdminUser,
   saveDynamicBlogPost,
   saveSiteSection,
   saveSiteSettings,
+  setCurrentUser,
   updateBlogPost,
   updateInquiryStatus,
   updateProduct,
+  updateUser,
   uploadImageFile,
+  type AdminRole,
+  type AdminUser,
+  type AuditLogItem,
   type BackendProduct,
   type CustomerInquiry,
   type DynamicBlogPost,
@@ -65,8 +90,6 @@ export const Route = createFileRoute("/admin")({
   }),
   component: AdminDashboard,
 });
-
-type AdminRole = "SUPER_ADMIN" | "STORE_MANAGER" | "MARKETING";
 
 function ImageUploadField({
   label,
@@ -135,11 +158,719 @@ function ImageUploadField({
   );
 }
 
-function AdminDashboard() {
-  const [activeRole, setActiveRole] = useState<AdminRole>("SUPER_ADMIN");
-  const [activeTab, setActiveTab] = useState<"inquiries" | "sections" | "blog" | "catalog">(
-    "inquiries",
+function AdminLoginScreen({ onLoginSuccess }: { onLoginSuccess: (user: AdminUser) => void }) {
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLogin = async (e?: React.FormEvent, customUser?: string, customPass?: string) => {
+    if (e) e.preventDefault();
+    const idToUse = customUser !== undefined ? customUser : identifier;
+    const passToUse = customPass !== undefined ? customPass : password;
+
+    if (!idToUse || !passToUse) {
+      setError("Please enter both username and password");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await loginAdminUser(idToUse, passToUse);
+      if (res.success && res.user) {
+        onLoginSuccess(res.user);
+      } else {
+        setError(res.error || "Invalid username or password");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to authenticate");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickLogin = (u: string, p: string) => {
+    setIdentifier(u);
+    setPassword(p);
+    handleLogin(undefined, u, p);
+  };
+
+  return (
+    <div className="min-h-screen bg-stone/20 flex items-center justify-center p-4 sm:p-6 lg:p-8 pt-32 pb-24">
+      <div className="w-full max-w-md bg-background rounded-xl border border-border shadow-2xl p-8 sm:p-10 space-y-6">
+        <div className="text-center space-y-2">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background mb-2 shadow-sm">
+            <ShieldCheck className="h-7 w-7" />
+          </div>
+          <p className="eyebrow text-muted-foreground">Anteniguss Home Showroom CMS</p>
+          <h1 className="display text-3xl text-foreground">Staff Portal Login</h1>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Sign in with your authorized staff credentials to manage showroom leads, product catalog,
+            and SEO design journal.
+          </p>
+        </div>
+
+        {error && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3.5 text-xs text-destructive flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              Username or Email
+            </label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                required
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="admin, manager, or marketing"
+                className="w-full rounded border border-input bg-stone/20 py-2.5 pl-10 pr-4 text-sm focus:border-foreground focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full rounded border border-input bg-stone/20 py-2.5 pl-10 pr-4 text-sm focus:border-foreground focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center gap-2 rounded border border-foreground bg-foreground px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-background hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span>Authenticating...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In to Portal</span>
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Quick Demo Access Pills */}
+        <div className="pt-5 border-t border-border">
+          <p className="eyebrow text-[10px] text-muted-foreground mb-2.5 text-center">
+            One-Click Staff Sign-In (For Testing)
+          </p>
+          <div className="grid grid-cols-3 gap-2 text-[11px]">
+            <button
+              type="button"
+              onClick={() => handleQuickLogin("admin", "Anteniguss2026!")}
+              className="rounded border border-border bg-stone/40 p-2.5 text-center hover:bg-stone transition-colors"
+            >
+              <span className="font-semibold block text-foreground">Super Admin</span>
+              <span className="text-[10px] text-muted-foreground">All features</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickLogin("manager", "Manager2026!")}
+              className="rounded border border-border bg-stone/40 p-2.5 text-center hover:bg-stone transition-colors"
+            >
+              <span className="font-semibold block text-foreground">Manager</span>
+              <span className="text-[10px] text-muted-foreground">Store & Leads</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickLogin("marketing", "Marketing2026!")}
+              className="rounded border border-border bg-stone/40 p-2.5 text-center hover:bg-stone transition-colors"
+            >
+              <span className="font-semibold block text-foreground">Marketing</span>
+              <span className="text-[10px] text-muted-foreground">SEO Journal</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
+}
+
+function AdminProfileModal({
+  user,
+  isOpen,
+  onClose,
+}: {
+  user: AdminUser;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) return;
+    if (newPassword.length < 6) {
+      setNotice({ type: "error", message: "New password must be at least 6 characters." });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setNotice({ type: "error", message: "New passwords do not match." });
+      return;
+    }
+
+    setLoading(true);
+    setNotice(null);
+    try {
+      const res = await changeUserPassword(user.id, currentPassword, newPassword);
+      if (res.success) {
+        setNotice({ type: "success", message: "Password updated successfully!" });
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setTimeout(() => {
+          setNotice(null);
+          onClose();
+        }, 1500);
+      } else {
+        setNotice({ type: "error", message: res.error || "Failed to update password." });
+      }
+    } catch (err: any) {
+      setNotice({ type: "error", message: err?.message || "Error changing password." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-ink/70 backdrop-blur-xs transition-opacity" onClick={onClose} />
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="relative w-full max-w-lg rounded-xl bg-background p-6 sm:p-8 shadow-2xl border border-border space-y-6">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <div>
+              <p className="eyebrow text-muted-foreground">Account Information</p>
+              <h3 className="display text-2xl">Staff Profile & Credentials</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full hover:bg-stone text-muted-foreground transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="rounded-lg border border-border bg-stone/30 p-4 space-y-2.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Full Name:</span>
+              <span className="font-semibold text-foreground">{user.full_name}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Username:</span>
+              <span className="font-mono text-foreground font-semibold">@{user.username}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Email:</span>
+              <span className="text-foreground">{user.email}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Permission Role:</span>
+              <span className="rounded bg-foreground text-background px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                {user.role.replace("_", " ")}
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <h4 className="font-semibold text-sm border-b border-border/60 pb-2">Change Password</h4>
+
+            {notice && (
+              <div
+                className={`rounded p-3 text-xs flex items-center gap-2 ${
+                  notice.type === "success"
+                    ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-800"
+                    : "border border-destructive/30 bg-destructive/10 text-destructive"
+                }`}
+              >
+                {notice.type === "success" ? (
+                  <CheckCircle className="h-4 w-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                )}
+                <span>{notice.message}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Current Password *
+              </label>
+              <input
+                type="password"
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                New Password *
+              </label>
+              <input
+                type="password"
+                required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="At least 6 characters"
+                className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Confirm New Password *
+              </label>
+              <input
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded border border-border text-xs font-semibold hover:bg-stone"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-5 py-2.5 rounded border border-foreground bg-foreground text-xs font-semibold text-background hover:opacity-90 disabled:opacity-50"
+              >
+                {loading ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserManagementTab({ currentUser }: { currentUser: AdminUser }) {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newFullName, setNewFullName] = useState("");
+  const [newRole, setNewRole] = useState<AdminRole>("STORE_MANAGER");
+  const [newPassword, setNewPassword] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadUsers = () => {
+    getUsers().then(setUsers);
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUsername || !newEmail || !newPassword) return;
+
+    setLoading(true);
+    const res = await createUser({
+      username: newUsername,
+      email: newEmail,
+      full_name: newFullName || newUsername,
+      role: newRole,
+      password: newPassword,
+      auth_user_name: currentUser.username,
+    });
+    setLoading(false);
+
+    if (res.success) {
+      setNotice(`User @${newUsername} created successfully!`);
+      setShowAddModal(false);
+      setNewUsername("");
+      setNewEmail("");
+      setNewFullName("");
+      setNewPassword("");
+      loadUsers();
+      setTimeout(() => setNotice(null), 4000);
+    } else {
+      alert(res.error || "Failed to create user");
+    }
+  };
+
+  const handleDelete = async (id: number, username: string) => {
+    if (id === currentUser.id) {
+      alert("You cannot delete your own account.");
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete staff account @${username}?`)) return;
+
+    const res = await deleteUser(id, currentUser.username);
+    if (res.success) {
+      setNotice(`User @${username} deleted.`);
+      loadUsers();
+      setTimeout(() => setNotice(null), 4000);
+    } else {
+      alert(res.error || "Failed to delete user");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="display text-3xl">Staff & Roles Management</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create and manage showroom managers, marketing editors, and staff access accounts.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center gap-2 rounded border border-foreground bg-foreground px-4 py-2.5 text-xs font-semibold text-background hover:opacity-90"
+        >
+          <UserPlus className="h-4 w-4" />
+          <span>Add New Staff Account</span>
+        </button>
+      </div>
+
+      {notice && (
+        <div className="rounded border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-semibold text-emerald-800 flex items-center gap-2">
+          <CheckCircle className="h-4 w-4" />
+          <span>{notice}</span>
+        </div>
+      )}
+
+      {/* Users Table */}
+      <div className="rounded-lg border border-border bg-background overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-stone/50 border-b border-border uppercase tracking-wider text-muted-foreground font-semibold">
+              <tr>
+                <th className="px-6 py-3.5">Staff User</th>
+                <th className="px-6 py-3.5">Email</th>
+                <th className="px-6 py-3.5">Role</th>
+                <th className="px-6 py-3.5">Status</th>
+                <th className="px-6 py-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {users.map((u) => (
+                <tr key={u.id} className="hover:bg-stone/20 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-stone font-semibold text-foreground text-xs uppercase">
+                        {u.full_name?.charAt(0) || u.username.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">{u.full_name}</p>
+                        <p className="text-[11px] text-muted-foreground">@{u.username}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-muted-foreground">{u.email}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-block rounded px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${
+                        u.role === "SUPER_ADMIN"
+                          ? "bg-purple-100 text-purple-800"
+                          : u.role === "STORE_MANAGER"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {u.role.replace("_", " ")}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center gap-1.5 text-emerald-700 font-medium">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      Active
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    {u.id !== currentUser.id ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(u.id, u.username)}
+                        className="p-1.5 rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        title="Delete user"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground italic">(Current Account)</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Add Staff Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-ink/70 backdrop-blur-xs transition-opacity"
+            onClick={() => setShowAddModal(false)}
+          />
+          <div className="flex min-h-screen items-center justify-center p-4">
+            <div className="relative w-full max-w-md rounded-xl bg-background p-6 shadow-2xl border border-border space-y-4">
+              <h3 className="display text-2xl">Create Staff Account</h3>
+              <form onSubmit={handleCreateUser} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newFullName}
+                    onChange={(e) => setNewFullName(e.target.value)}
+                    placeholder="e.g. Bethlehem Tilahun"
+                    className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    Username *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newUsername}
+                    onChange={(e) =>
+                      setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))
+                    }
+                    placeholder="e.g. manager_bole"
+                    className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="name@anteniguss.com"
+                    className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    Role *
+                  </label>
+                  <select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value as AdminRole)}
+                    className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+                  >
+                    <option value="STORE_MANAGER">Store Manager (Products, Sections, Inquiries)</option>
+                    <option value="MARKETING">Marketing Editor (SEO Journal & Leads)</option>
+                    <option value="SUPER_ADMIN">Super Admin (Full System Control)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    Initial Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                    className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-2 rounded border border-border text-xs font-semibold hover:bg-stone"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2.5 rounded border border-foreground bg-foreground text-xs font-semibold text-background hover:opacity-90 disabled:opacity-50"
+                  >
+                    {loading ? "Creating..." : "Create Account"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AuditLogsTab() {
+  const [logs, setLogs] = useState<AuditLogItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const loadLogs = async () => {
+    setLoading(true);
+    const data = await getAuditLogs();
+    setLogs(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const filteredLogs = logs.filter((l) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      (l.action || "").toLowerCase().includes(q) ||
+      (l.target || "").toLowerCase().includes(q) ||
+      (l.details || "").toLowerCase().includes(q) ||
+      (l.user_name || "").toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="display text-3xl">System Audit Trail</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Immutable log of major actions: product creation/updates, post publications, section updates, and staff logins.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={loadLogs}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-4 py-2 text-xs font-semibold hover:bg-stone"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+          <span>Refresh Logs</span>
+        </button>
+      </div>
+
+      <div className="relative max-w-md">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Filter audit logs..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded border border-input bg-background py-2 pl-10 pr-4 text-xs focus:outline-none"
+        />
+      </div>
+
+      <div className="rounded-lg border border-border bg-background overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-stone/50 border-b border-border uppercase tracking-wider text-muted-foreground font-semibold">
+              <tr>
+                <th className="px-6 py-3.5">Timestamp</th>
+                <th className="px-6 py-3.5">Staff User</th>
+                <th className="px-6 py-3.5">Action</th>
+                <th className="px-6 py-3.5">Target</th>
+                <th className="px-6 py-3.5">Details</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60 font-mono text-[11px]">
+              {filteredLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground font-sans text-xs">
+                    No audit records logged yet.
+                  </td>
+                </tr>
+              ) : (
+                filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-stone/20 transition-colors">
+                    <td className="px-6 py-3 text-muted-foreground whitespace-nowrap">
+                      {new Date(log.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-3 font-semibold text-foreground">
+                      @{log.user_name || "system"}
+                      {log.user_role && (
+                        <span className="ml-1 text-[10px] text-muted-foreground font-normal not-mono">
+                          ({log.user_role})
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-3">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase not-mono ${
+                          log.action.includes("DELETE")
+                            ? "bg-destructive/10 text-destructive"
+                            : log.action.includes("CREATE")
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {log.action}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-foreground">{log.target || "—"}</td>
+                    <td className="px-6 py-3 text-muted-foreground max-w-md truncate font-sans text-xs">
+                      {log.details || "—"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminDashboard() {
+  const [currentUser, setCurrentUserState] = useState<AdminUser | null>(() => getCurrentUser());
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "inquiries" | "sections" | "blog" | "catalog" | "users" | "audit"
+  >("inquiries");
 
   // Inquiries State
   const [inquiries, setInquiries] = useState<CustomerInquiry[]>([]);
@@ -210,7 +941,31 @@ function AdminDashboard() {
   const [prodImageUrl, setProdImageUrl] = useState("/curved-boucle-sofa.jpg");
   const [prodIsFeatured, setProdIsFeatured] = useState(false);
   const [prodIsTopPick, setProdIsTopPick] = useState(false);
+  const [prodWoodOptions, setProdWoodOptions] = useState(
+    "Solid Ethiopian Wanza, Stained Ash, Natural Teak, Dark Walnut",
+  );
+  const [prodFabricOptions, setProdFabricOptions] = useState(
+    "Belgian Linen, Bouclé Warm Ivory, Olive Textured Chenille, Addis Camel Leather",
+  );
   const [productNotice, setProductNotice] = useState<string | null>(null);
+
+  // Allowed tabs per role
+  const allowedTabs = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.role === "SUPER_ADMIN") {
+      return ["inquiries", "sections", "catalog", "blog", "users", "audit"];
+    }
+    if (currentUser.role === "STORE_MANAGER") {
+      return ["inquiries", "sections", "catalog", "audit"];
+    }
+    return ["blog", "inquiries"];
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser && allowedTabs.length > 0 && !allowedTabs.includes(activeTab)) {
+      setActiveTab(allowedTabs[0] as any);
+    }
+  }, [currentUser, allowedTabs, activeTab]);
 
   const refreshProducts = () => {
     getProducts({ include_archived: true }).then((list) => {
@@ -278,10 +1033,15 @@ function AdminDashboard() {
 
   // Save Sections
   const handleSaveSections = async () => {
-    await saveSiteSection("hero", heroSettings);
-    await saveSiteSection("made_to_order", madeToOrderSettings);
-    await saveSiteSection("showroom", showroomSettings);
-    await saveSiteSection("about_page", aboutSettings);
+    await saveSiteSection("hero", heroSettings, currentUser?.username, currentUser?.role);
+    await saveSiteSection(
+      "made_to_order",
+      madeToOrderSettings,
+      currentUser?.username,
+      currentUser?.role,
+    );
+    await saveSiteSection("showroom", showroomSettings, currentUser?.username, currentUser?.role);
+    await saveSiteSection("about_page", aboutSettings, currentUser?.username, currentUser?.role);
     setSectionSaveNotice("Site sections updated successfully!");
     setTimeout(() => setSectionSaveNotice(null), 4000);
   };
@@ -299,6 +1059,10 @@ function AdminDashboard() {
     setProdImageUrl("/curved-boucle-sofa.jpg");
     setProdIsFeatured(false);
     setProdIsTopPick(false);
+    setProdWoodOptions("Solid Ethiopian Wanza, Stained Ash, Natural Teak, Dark Walnut");
+    setProdFabricOptions(
+      "Belgian Linen, Bouclé Warm Ivory, Olive Textured Chenille, Addis Camel Leather",
+    );
     setShowProductModal(true);
   };
 
@@ -314,12 +1078,34 @@ function AdminDashboard() {
     setProdImageUrl(p.image_url);
     setProdIsFeatured(p.is_featured);
     setProdIsTopPick(p.is_top_pick);
+    setProdWoodOptions(
+      Array.isArray(p.wood_options) && p.wood_options.length > 0
+        ? p.wood_options.join(", ")
+        : "Solid Ethiopian Wanza, Stained Ash, Natural Teak, Dark Walnut",
+    );
+    setProdFabricOptions(
+      Array.isArray(p.fabric_options) && p.fabric_options.length > 0
+        ? p.fabric_options.join(", ")
+        : "Belgian Linen, Bouclé Warm Ivory, Olive Textured Chenille, Addis Camel Leather",
+    );
     setShowProductModal(true);
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prodTitle || !prodImageUrl) return;
+
+    const woods = prodWoodOptions
+      .split(",")
+      .map((w) => w.trim())
+      .filter(Boolean);
+    const fabrics = prodFabricOptions
+      .split(",")
+      .map((f) => f.trim())
+      .filter(Boolean);
+    const computedDetail = prodDimensions
+      ? `${prodCapacity || "Custom"} · ${prodDimensions}`
+      : prodCapacity || "Made to Order";
 
     if (editingProductId) {
       await updateProduct(editingProductId, {
@@ -329,10 +1115,15 @@ function AdminDashboard() {
         seating_capacity: prodCapacity || null,
         dimensions: prodDimensions || null,
         description: prodDescription || null,
+        detail: computedDetail,
         price_display: prodPriceDisplay,
         image_url: prodImageUrl,
         is_featured: prodIsFeatured,
         is_top_pick: prodIsTopPick,
+        wood_options: woods,
+        fabric_options: fabrics,
+        auth_user_name: currentUser?.username,
+        auth_user_role: currentUser?.role,
       });
       setProductNotice(`Updated "${prodTitle}" successfully!`);
     } else {
@@ -344,11 +1135,16 @@ function AdminDashboard() {
         seating_capacity: prodCapacity || null,
         dimensions: prodDimensions || null,
         description: prodDescription || null,
+        detail: computedDetail,
         price_display: prodPriceDisplay,
         image_url: prodImageUrl,
         is_featured: prodIsFeatured,
         is_top_pick: prodIsTopPick,
+        wood_options: woods,
+        fabric_options: fabrics,
         sort_order: products.length + 1,
+        auth_user_name: currentUser?.username,
+        auth_user_role: currentUser?.role,
       });
       setProductNotice(`Created "${prodTitle}" in catalog!`);
     }
@@ -360,17 +1156,25 @@ function AdminDashboard() {
 
   const handleDeleteProduct = async (id: number | string) => {
     if (!confirm("Are you sure you want to remove this product from the catalog?")) return;
-    await deleteProduct(id, false);
+    await deleteProduct(id, false, currentUser?.username, currentUser?.role);
     refreshProducts();
   };
 
   const handleToggleTopPick = async (id: number | string, current: boolean) => {
-    await updateProduct(id, { is_top_pick: !current });
+    await updateProduct(id, {
+      is_top_pick: !current,
+      auth_user_name: currentUser?.username,
+      auth_user_role: currentUser?.role,
+    });
     refreshProducts();
   };
 
   const handleToggleFeatured = async (id: number | string, current: boolean) => {
-    await updateProduct(id, { is_featured: !current });
+    await updateProduct(id, {
+      is_featured: !current,
+      auth_user_name: currentUser?.username,
+      auth_user_role: currentUser?.role,
+    });
     refreshProducts();
   };
 
@@ -400,7 +1204,7 @@ function AdminDashboard() {
 
   const handleDeleteBlogPost = async (idOrSlug: string | number) => {
     if (!confirm("Are you sure you want to delete this article?")) return;
-    await deleteBlogPost(idOrSlug);
+    await deleteBlogPost(idOrSlug, currentUser?.username, currentUser?.role);
     refreshPosts();
     if (editingPostId === idOrSlug) {
       handleCancelEditPost();
@@ -427,6 +1231,8 @@ function AdminDashboard() {
       target_keyword: targetKeyword,
       meta_title: metaTitle || `${blogTitle} — Anteniguss Home`,
       meta_description: metaDescription || blogExcerpt,
+      auth_user_name: currentUser?.username,
+      auth_user_role: currentUser?.role,
     };
 
     if (editingPostId) {
@@ -465,9 +1271,20 @@ function AdminDashboard() {
     return true;
   });
 
+  if (!currentUser) {
+    return (
+      <AdminLoginScreen
+        onLoginSuccess={(u) => {
+          setCurrentUser(u);
+          setCurrentUserState(u);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-stone/20 pt-28 pb-20">
-      {/* Top Banner / Role Switcher */}
+      {/* Top Banner / Authenticated Staff Header */}
       <header className="border-b border-border bg-background shadow-xs">
         <div className="mx-auto max-w-[110rem] px-6 py-4 sm:px-10 lg:px-16 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -478,52 +1295,65 @@ function AdminDashboard() {
             <h1 className="display text-2xl">Management & Leads Portal</h1>
           </div>
 
-          {/* Role selector pill */}
+          {/* Authenticated Staff Pill & Account Actions */}
           <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5 text-foreground" />
-              Active Role:
-            </span>
-            <div className="flex rounded-md border border-border bg-stone/40 p-1">
-              {(["SUPER_ADMIN", "STORE_MANAGER", "MARKETING"] as AdminRole[]).map((role) => (
-                <button
-                  key={role}
-                  onClick={() => setActiveRole(role)}
-                  className={`px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors ${
-                    activeRole === role
-                      ? "bg-foreground text-background shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {role === "SUPER_ADMIN"
-                    ? "Super Admin"
-                    : role === "STORE_MANAGER"
-                      ? "Store Manager"
-                      : "Marketing"}
-                </button>
-              ))}
+            <div className="flex items-center gap-2.5 rounded-lg border border-border bg-stone/30 px-3.5 py-1.5 text-xs">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-background font-bold text-[11px] uppercase">
+                {currentUser.full_name?.charAt(0) || currentUser.username.charAt(0)}
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-foreground leading-tight">{currentUser.full_name}</p>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">
+                  {currentUser.role.replace("_", " ")}
+                </span>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowProfileModal(true)}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-stone transition-colors"
+              title="Staff Profile & Change Password"
+            >
+              <Key className="h-3.5 w-3.5" />
+              <span>Profile</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentUser(null);
+                setCurrentUserState(null);
+              }}
+              className="inline-flex items-center gap-1.5 rounded border border-border bg-stone/40 px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation (Role Filtered) */}
         <div className="mx-auto max-w-[110rem] px-6 sm:px-10 lg:px-16 flex items-center gap-8 overflow-x-auto border-t border-border/50 text-sm">
-          <button
-            onClick={() => setActiveTab("inquiries")}
-            className={`py-3.5 border-b-2 font-medium transition-colors flex items-center gap-2 shrink-0 ${
-              activeTab === "inquiries"
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            <span>Customer Inquiries & Leads</span>
-            <span className="rounded-full bg-foreground text-background px-2 py-0.5 text-xs">
-              {inquiries.length}
-            </span>
-          </button>
+          {allowedTabs.includes("inquiries") && (
+            <button
+              onClick={() => setActiveTab("inquiries")}
+              className={`py-3.5 border-b-2 font-medium transition-colors flex items-center gap-2 shrink-0 ${
+                activeTab === "inquiries"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              <span>Customer Inquiries & Leads</span>
+              <span className="rounded-full bg-foreground text-background px-2 py-0.5 text-xs">
+                {inquiries.length}
+              </span>
+            </button>
+          )}
 
-          {(activeRole === "SUPER_ADMIN" || activeRole === "STORE_MANAGER") && (
+          {allowedTabs.includes("sections") && (
             <button
               onClick={() => setActiveTab("sections")}
               className={`py-3.5 border-b-2 font-medium transition-colors flex items-center gap-2 shrink-0 ${
@@ -537,7 +1367,21 @@ function AdminDashboard() {
             </button>
           )}
 
-          {(activeRole === "SUPER_ADMIN" || activeRole === "MARKETING") && (
+          {allowedTabs.includes("catalog") && (
+            <button
+              onClick={() => setActiveTab("catalog")}
+              className={`py-3.5 border-b-2 font-medium transition-colors flex items-center gap-2 shrink-0 ${
+                activeTab === "catalog"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Layers className="h-4 w-4" />
+              <span>Catalog & Product Manager</span>
+            </button>
+          )}
+
+          {allowedTabs.includes("blog") && (
             <button
               onClick={() => setActiveTab("blog")}
               className={`py-3.5 border-b-2 font-medium transition-colors flex items-center gap-2 shrink-0 ${
@@ -551,17 +1395,33 @@ function AdminDashboard() {
             </button>
           )}
 
-          <button
-            onClick={() => setActiveTab("catalog")}
-            className={`py-3.5 border-b-2 font-medium transition-colors flex items-center gap-2 shrink-0 ${
-              activeTab === "catalog"
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Layers className="h-4 w-4" />
-            <span>Look Book 2026 Models ({catalogueSofas.length})</span>
-          </button>
+          {allowedTabs.includes("users") && (
+            <button
+              onClick={() => setActiveTab("users")}
+              className={`py-3.5 border-b-2 font-medium transition-colors flex items-center gap-2 shrink-0 ${
+                activeTab === "users"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <UserCheck className="h-4 w-4" />
+              <span>Staff & Roles</span>
+            </button>
+          )}
+
+          {allowedTabs.includes("audit") && (
+            <button
+              onClick={() => setActiveTab("audit")}
+              className={`py-3.5 border-b-2 font-medium transition-colors flex items-center gap-2 shrink-0 ${
+                activeTab === "audit"
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <History className="h-4 w-4" />
+              <span>System Audit Trail</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -1640,6 +2500,34 @@ function AdminDashboard() {
                         />
                       </div>
 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                            Available Wood Finishes (comma separated)
+                          </label>
+                          <input
+                            type="text"
+                            value={prodWoodOptions}
+                            onChange={(e) => setProdWoodOptions(e.target.value)}
+                            placeholder="Solid Ethiopian Wanza, Stained Ash, Natural Teak"
+                            className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                            Available Fabrics (comma separated)
+                          </label>
+                          <input
+                            type="text"
+                            value={prodFabricOptions}
+                            onChange={(e) => setProdFabricOptions(e.target.value)}
+                            placeholder="Belgian Linen, Bouclé Warm Ivory, Camel Leather"
+                            className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                           Product Description
@@ -1704,7 +2592,26 @@ function AdminDashboard() {
             )}
           </div>
         )}
+
+        {/* ================================================================= */}
+        {/* TAB 5: STAFF & ROLES (SUPER_ADMIN ONLY)                           */}
+        {/* ================================================================= */}
+        {activeTab === "users" && <UserManagementTab currentUser={currentUser} />}
+
+        {/* ================================================================= */}
+        {/* TAB 6: AUDIT TRAIL (SUPER_ADMIN & STORE_MANAGER)                  */}
+        {/* ================================================================= */}
+        {activeTab === "audit" && <AuditLogsTab />}
       </main>
+
+      {/* Staff Profile & Password Modal */}
+      {showProfileModal && currentUser && (
+        <AdminProfileModal
+          user={currentUser}
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+        />
+      )}
     </div>
   );
 }

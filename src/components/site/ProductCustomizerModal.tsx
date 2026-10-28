@@ -39,9 +39,20 @@ export function ProductCustomizerModal({
   const [selectedWood, setSelectedWood] = useState(WOOD_OPTIONS[0].name);
   const [selectedFabric, setSelectedFabric] = useState(FABRIC_OPTIONS[0].name);
   const [quantity, setQuantity] = useState(1);
+  const [customNotes, setCustomNotes] = useState("");
   const [added, setAdded] = useState(false);
 
   if (!isOpen || !product) return null;
+
+  const rawWoods = (product as any).wood_options || (product as any).woodOptions;
+  const woodList: string[] = Array.isArray(rawWoods) && rawWoods.length > 0
+    ? rawWoods
+    : WOOD_OPTIONS.map((w) => w.name);
+
+  const rawFabrics = (product as any).fabric_options || (product as any).fabricOptions;
+  const fabricList: string[] = Array.isArray(rawFabrics) && rawFabrics.length > 0
+    ? rawFabrics
+    : FABRIC_OPTIONS.map((f) => f.name);
 
   const handleAddToBag = () => {
     addToQuoteBag({
@@ -52,14 +63,16 @@ export function ProductCustomizerModal({
       selectedWood,
       selectedFabric,
       quantity,
+      customNotes: customNotes.trim() || undefined,
     });
 
     setAdded(true);
     setTimeout(() => {
       setAdded(false);
+      setCustomNotes("");
       onClose();
       onOpenBag();
-    }, 600);
+    }, 300);
   };
 
   return (
@@ -137,18 +150,18 @@ export function ProductCustomizerModal({
                     Wood Finish: <span className="text-foreground">{selectedWood}</span>
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {WOOD_OPTIONS.map((wood) => (
+                    {woodList.map((wood) => (
                       <button
-                        key={wood.id}
+                        key={wood}
                         type="button"
-                        onClick={() => setSelectedWood(wood.name)}
+                        onClick={() => setSelectedWood(wood)}
                         className={`text-left p-2.5 rounded border text-xs transition-colors ${
-                          selectedWood === wood.name
+                          selectedWood === wood
                             ? "border-foreground bg-stone text-foreground font-semibold"
                             : "border-border hover:bg-stone/50 text-muted-foreground"
                         }`}
                       >
-                        <span className="block">{wood.name}</span>
+                        <span className="block">{wood}</span>
                       </button>
                     ))}
                   </div>
@@ -160,25 +173,35 @@ export function ProductCustomizerModal({
                     Upholstery Fabric: <span className="text-foreground">{selectedFabric}</span>
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {FABRIC_OPTIONS.map((fab) => (
+                    {fabricList.map((fab) => (
                       <button
-                        key={fab.id}
+                        key={fab}
                         type="button"
-                        onClick={() => setSelectedFabric(fab.name)}
+                        onClick={() => setSelectedFabric(fab)}
                         className={`inline-flex items-center gap-2 px-3 py-2 rounded border text-xs transition-colors ${
-                          selectedFabric === fab.name
+                          selectedFabric === fab
                             ? "border-foreground bg-stone font-semibold text-foreground"
                             : "border-border hover:bg-stone/50 text-muted-foreground"
                         }`}
                       >
-                        <span
-                          className="h-3.5 w-3.5 rounded-full border border-black/20 shrink-0"
-                          style={{ backgroundColor: fab.color }}
-                        />
-                        <span>{fab.name.split(" ")[0]}</span>
+                        <span>{fab}</span>
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Custom Notes / Client Specs */}
+                <div className="mt-6">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                    Custom Specifications / Size Notes:
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={customNotes}
+                    onChange={(e) => setCustomNotes(e.target.value)}
+                    placeholder="e.g. Need 320cm width, or prefer a darker walnut tone..."
+                    className="w-full rounded border border-input bg-stone/20 p-2.5 text-xs text-foreground focus:border-foreground focus:outline-none placeholder:text-muted-foreground/60"
+                  />
                 </div>
 
                 {/* Quantity */}

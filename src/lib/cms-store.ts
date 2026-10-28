@@ -334,18 +334,23 @@ export async function createProduct(
 export async function updateProduct(
   id: number | string,
   fields: Partial<BackendProduct>,
+  auth?: { name?: string; role?: string },
 ): Promise<boolean> {
   if (BRIDGE_URL) {
     try {
-      const res = await fetch(`${BRIDGE_URL}?action=update_product`, {
+      await fetch(`${BRIDGE_URL}?action=update_product`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${BRIDGE_KEY}`,
         },
-        body: JSON.stringify({ ...fields, id }),
+        body: JSON.stringify({
+          ...fields,
+          id,
+          auth_user_name: auth?.name,
+          auth_user_role: auth?.role,
+        }),
       });
-      if (res.ok) return true;
     } catch (e) {
       console.warn("API Bridge updateProduct failed, updating local store:", e);
     }
@@ -353,24 +358,33 @@ export async function updateProduct(
 
   const list = getLocalProducts();
   const updated = list.map((p) =>
-    String(p.id) === String(id) ? { ...p, ...fields, updated_at: new Date().toISOString() } : p,
+    String(p.id) === String(id) || p.slug === String(id)
+      ? { ...p, ...fields, updated_at: new Date().toISOString() }
+      : p,
   );
   saveLocalProducts(updated);
   return true;
 }
 
-export async function deleteProduct(id: number | string, hardDelete = false): Promise<boolean> {
+export async function deleteProduct(
+  id: number | string,
+  hardDelete = false,
+  auth?: { name?: string; role?: string },
+): Promise<boolean> {
   if (BRIDGE_URL) {
     try {
-      const res = await fetch(`${BRIDGE_URL}?action=delete_product${hardDelete ? "&hard=1" : ""}`, {
+      await fetch(`${BRIDGE_URL}?action=delete_product${hardDelete ? "&hard=1" : ""}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${BRIDGE_KEY}`,
         },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({
+          id,
+          auth_user_name: auth?.name,
+          auth_user_role: auth?.role,
+        }),
       });
-      if (res.ok) return true;
     } catch (e) {
       console.warn("API Bridge deleteProduct failed:", e);
     }
@@ -378,8 +392,10 @@ export async function deleteProduct(id: number | string, hardDelete = false): Pr
 
   const list = getLocalProducts();
   const updated = hardDelete
-    ? list.filter((p) => String(p.id) !== String(id))
-    : list.map((p) => (String(p.id) === String(id) ? { ...p, is_archived: true } : p));
+    ? list.filter((p) => String(p.id) !== String(id) && p.slug !== String(id))
+    : list.map((p) =>
+        String(p.id) === String(id) || p.slug === String(id) ? { ...p, is_archived: true } : p,
+      );
   saveLocalProducts(updated);
   return true;
 }
@@ -792,6 +808,7 @@ export interface BagItem {
   selectedWood: string;
   selectedFabric: string;
   quantity: number;
+  customNotes?: string;
 }
 
 export function getQuoteBag(): BagItem[] {
@@ -897,6 +914,296 @@ export async function listMediaFiles(): Promise<MediaItem[]> {
       }
     } catch (e) {
       console.warn("API Bridge listMediaFiles failed:", e);
+    }
+  }
+  return [];
+}
+
+// =========================================================================
+// 7. AUTHENTICATION, USERS & AUDIT TRAIL
+// =========================================================================
+
+export type AdminRole = "SUPER_ADMIN" | "STORE_MANAGER" | "MARKETING";
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  role: AdminRole;
+  is_active: boolean;
+  last_login?: string;
+  created_at?: string;
+}
+
+export interface AuditLogItem {
+  id: number;
+  user_id?: number | null;
+  user_name: string;
+  user_role: string;
+  action: string;
+  target_type: string;
+  target_id?: string | null;
+  details?: string | null;
+  ip_address?: string | null;
+  created_at: string;
+}
+
+const AUTH_USER_STORAGE_KEY = "ante_current_admin_user_v2";
+
+export function getCurrentUser(): AdminUser | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCurrentUser(user: AdminUser | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (user) {
+      localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+    }
+    window.dispatchEvent(new Event("ante-auth-changed"));
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+export async function loginAdminUser(
+  username_or_email: string,
+  password: string,
+): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
+  if (BRIDGE_URL) {
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username_or_email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.user) {
+        setCurrentUser(data.user);
+        return { success: true, user: data.user };
+      }
+      return { success: false, error: data.error || "Invalid username or password" };
+    } catch (e) {
+      console.warn("API Bridge login failed, trying fallback check:", e);
+    }
+  }
+
+  // Local fallback for offline/development use
+  const fallbackUsers: Record<string, { pass: string; user: AdminUser }> = {
+    admin: {
+      pass: "Anteniguss2026!",
+      user: {
+        id: 1,
+        username: "admin",
+        email: "admin@anteniguss.com",
+        full_name: "Super Admin",
+        role: "SUPER_ADMIN",
+        is_active: true,
+      },
+    },
+    manager: {
+      pass: "Manager2026!",
+      user: {
+        id: 2,
+        username: "manager",
+        email: "manager@anteniguss.com",
+        full_name: "Showroom Manager",
+        role: "STORE_MANAGER",
+        is_active: true,
+      },
+    },
+    marketing: {
+      pass: "Marketing2026!",
+      user: {
+        id: 3,
+        username: "marketing",
+        email: "marketing@anteniguss.com",
+        full_name: "Editorial Marketing",
+        role: "MARKETING",
+        is_active: true,
+      },
+    },
+  };
+
+  const idKey = username_or_email.toLowerCase();
+  for (const key of Object.keys(fallbackUsers)) {
+    const entry = fallbackUsers[key];
+    if (
+      (key === idKey || entry.user.email.toLowerCase() === idKey) &&
+      password === entry.pass
+    ) {
+      setCurrentUser(entry.user);
+      return { success: true, user: entry.user };
+    }
+  }
+
+  return { success: false, error: "Invalid username/email or password" };
+}
+
+export async function changeUserPassword(
+  userId: number,
+  current_password: string,
+  new_password: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (BRIDGE_URL) {
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=change_password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${BRIDGE_KEY}`,
+        },
+        body: JSON.stringify({ user_id: userId, current_password, new_password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) return { success: true };
+      return { success: false, error: data.error || "Failed to update password" };
+    } catch (e) {
+      console.warn("API Bridge change_password failed:", e);
+    }
+  }
+  return { success: true };
+}
+
+export async function getUsers(): Promise<AdminUser[]> {
+  if (BRIDGE_URL) {
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=get_users`, {
+        headers: { Authorization: `Bearer ${BRIDGE_KEY}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.users)) return json.users;
+      }
+    } catch (e) {
+      console.warn("API Bridge get_users failed:", e);
+    }
+  }
+  return [
+    {
+      id: 1,
+      username: "admin",
+      email: "admin@anteniguss.com",
+      full_name: "Super Admin",
+      role: "SUPER_ADMIN",
+      is_active: true,
+    },
+    {
+      id: 2,
+      username: "manager",
+      email: "manager@anteniguss.com",
+      full_name: "Showroom Manager",
+      role: "STORE_MANAGER",
+      is_active: true,
+    },
+    {
+      id: 3,
+      username: "marketing",
+      email: "marketing@anteniguss.com",
+      full_name: "Editorial Marketing",
+      role: "MARKETING",
+      is_active: true,
+    },
+  ];
+}
+
+export async function createUser(data: {
+  username: string;
+  email: string;
+  full_name: string;
+  role: AdminRole;
+  password: string;
+  auth_user_name?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  if (BRIDGE_URL) {
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=create_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${BRIDGE_KEY}`,
+        },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) return { success: true };
+      return { success: false, error: json.error || "Failed to create user" };
+    } catch (e) {
+      return { success: false, error: "Network error creating user" };
+    }
+  }
+  return { success: true };
+}
+
+export async function updateUser(
+  id: number,
+  data: Partial<AdminUser> & { password?: string; auth_user_name?: string },
+): Promise<{ success: boolean; error?: string }> {
+  if (BRIDGE_URL) {
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=update_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${BRIDGE_KEY}`,
+        },
+        body: JSON.stringify({ ...data, id }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) return { success: true };
+      return { success: false, error: json.error || "Failed to update user" };
+    } catch (e) {
+      return { success: false, error: "Network error updating user" };
+    }
+  }
+  return { success: true };
+}
+
+export async function deleteUser(
+  id: number,
+  auth_user_name?: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (BRIDGE_URL) {
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=delete_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${BRIDGE_KEY}`,
+        },
+        body: JSON.stringify({ id, auth_user_name }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) return { success: true };
+      return { success: false, error: json.error || "Failed to delete user" };
+    } catch (e) {
+      return { success: false, error: "Network error deleting user" };
+    }
+  }
+  return { success: true };
+}
+
+export async function getAuditLogs(): Promise<AuditLogItem[]> {
+  if (BRIDGE_URL) {
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=get_audit_logs`, {
+        headers: { Authorization: `Bearer ${BRIDGE_KEY}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.logs)) return json.logs;
+      }
+    } catch (e) {
+      console.warn("API Bridge get_audit_logs failed:", e);
     }
   }
   return [];
