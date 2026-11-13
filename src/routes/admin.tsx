@@ -895,6 +895,7 @@ function AdminDashboard() {
   const [blogTitle, setBlogTitle] = useState("");
   const [blogSlug, setBlogSlug] = useState("");
   const [blogCategory, setBlogCategory] = useState("Interiors");
+  const [blogAuthor, setBlogAuthor] = useState("Anteniguss Atelier");
   const [blogExcerpt, setBlogExcerpt] = useState("");
   const [blogContent, setBlogContent] = useState("");
   const [blogCoverImage, setBlogCoverImage] = useState("/journal-feature.jpg");
@@ -1161,6 +1162,7 @@ function AdminDashboard() {
     setBlogTitle(post.title);
     setBlogSlug(post.slug);
     setBlogCategory(post.category);
+    setBlogAuthor(post.author_name || "Anteniguss Atelier");
     setBlogExcerpt(post.excerpt || "");
     setBlogContent(post.content);
     setBlogCoverImage(post.cover_image_url || "/journal-feature.jpg");
@@ -1173,6 +1175,8 @@ function AdminDashboard() {
     setEditingPostId(null);
     setBlogTitle("");
     setBlogSlug("");
+    setBlogCategory("Interiors");
+    setBlogAuthor("Anteniguss Atelier");
     setBlogExcerpt("");
     setBlogContent("");
     setMetaTitle("");
@@ -1201,6 +1205,7 @@ function AdminDashboard() {
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, ""),
       category: blogCategory,
+      author_name: blogAuthor.trim() || "Anteniguss Atelier",
       excerpt: blogExcerpt,
       content: blogContent,
       cover_image_url: blogCoverImage,
@@ -1917,7 +1922,7 @@ function AdminDashboard() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                       URL Slug
@@ -1929,6 +1934,44 @@ function AdminDashboard() {
                       onChange={(e) => setBlogSlug(e.target.value)}
                       className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                      Author Byline
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Anteniguss Atelier"
+                      value={blogAuthor}
+                      onChange={(e) => setBlogAuthor(e.target.value)}
+                      className="w-full rounded border border-input bg-background p-2.5 text-sm focus:outline-none"
+                    />
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setBlogAuthor("Anteniguss Atelier")}
+                        className="text-[10px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+                      >
+                        Atelier
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBlogAuthor("Editorial Team")}
+                        className="text-[10px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+                      >
+                        Editorial
+                      </button>
+                      {currentUser?.full_name && (
+                        <button
+                          type="button"
+                          onClick={() => setBlogAuthor(currentUser.full_name)}
+                          className="text-[10px] text-muted-foreground hover:text-foreground underline cursor-pointer"
+                        >
+                          {currentUser.full_name}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div>

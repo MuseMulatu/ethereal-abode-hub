@@ -82,6 +82,20 @@ export const Route = createFileRoute("/blog/$slug")({
   component: BlogPostDetail,
 });
 
+function renderInlineMarkdown(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={index} className="font-semibold text-foreground">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
 function BlogPostDetail() {
   const { post, related } = Route.useLoaderData();
   const [copied, setCopied] = useState(false);
@@ -207,20 +221,20 @@ function BlogPostDetail() {
                 </h2>
               );
             }
-            if (trimmed.startsWith("- ")) {
+            if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
               return (
                 <ul key={i} className="list-disc pl-6 space-y-2 text-base">
                   {trimmed
                     .split("\n")
                     .map((li, idx) => (
-                      <li key={idx}>{li.replace(/^- /, "")}</li>
+                      <li key={idx}>{renderInlineMarkdown(li.replace(/^[-*]\s+/, ""))}</li>
                     ))}
                 </ul>
               );
             }
             return (
               <p key={i} className="leading-relaxed">
-                {trimmed}
+                {renderInlineMarkdown(trimmed)}
               </p>
             );
           })}

@@ -7,7 +7,7 @@ import { SectionHeader } from "@/components/site/SectionHeader";
 import { featuredPost, posts } from "@/data/site";
 import { getBlogPosts, getDynamicBlogPosts, type DynamicBlogPost } from "@/lib/cms-store";
 
-export const Route = createFileRoute("/blog")({
+export const Route = createFileRoute("/blog/")({
   head: () => ({
     meta: [
       { title: "The Design Journal — Anteniguss Home" },
