@@ -8,16 +8,16 @@ import { brand } from "@/data/site";
 import { getQuoteBag } from "@/lib/cms-store";
 import { cn } from "@/lib/utils";
 
-export const navLinks = [
+export const navLinks: { to: string; search?: Record<string, string>; label: string }[] = [
   { to: "/", label: "Home" },
-  { to: "/shop", label: "Catalog" },
-  { to: "/soft-furnishings", label: "Sofas & Chairs" },
-  { to: "/kitchen", label: "Dining" },
-  { to: "/kids", label: "Living & Bed" },
+  { to: "/shop", search: { category: "all" }, label: "Catalog" },
+  { to: "/shop", search: { category: "sofas" }, label: "Sofas & Chairs" },
+  { to: "/shop", search: { category: "dining" }, label: "Dining" },
+  { to: "/shop", search: { category: "living-kids" }, label: "Living & Bed" },
   { to: "/blog", label: "Journal" },
   { to: "/about", label: "About Us" },
   { to: "/contact", label: "Contact" },
-] as const;
+];
 
 export function Navbar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -82,8 +82,9 @@ export function Navbar() {
           <nav className="hidden items-center gap-7 lg:flex">
             {navLinks.map((link) => (
               <Link
-                key={link.to}
+                key={link.label}
                 to={link.to}
+                search={link.search}
                 className="eyebrow link-quiet opacity-80 transition-opacity duration-500 hover:opacity-100 text-[13px] tracking-wider"
                 activeProps={{ className: "opacity-100 font-semibold" }}
               >
@@ -146,8 +147,9 @@ export function Navbar() {
           <nav className="flex flex-col px-6 py-6 sm:px-10">
             {navLinks.map((link) => (
               <Link
-                key={link.to}
+                key={link.label}
                 to={link.to}
+                search={link.search}
                 className="display border-b border-border py-3.5 text-2xl text-foreground last:border-b-0 hover:text-foreground/75"
               >
                 {link.label}

@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { Check, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -16,6 +17,7 @@ interface QuoteBagDrawerProps {
 }
 
 export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
+  const navigate = useNavigate();
   const [items, setItems] = useState<BagItem[]>(() =>
     typeof window !== "undefined" ? getQuoteBag() : [],
   );
@@ -169,12 +171,16 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
               <div className="my-16 text-center">
                 <p className="text-muted-foreground">Your quote bag is currently empty.</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Browse our collection and click "Express Interest" on any piece to start a custom
+                  Browse our collection and click "Customize & Quote" on any piece to start a custom
                   quote.
                 </p>
                 <button
-                  onClick={onClose}
-                  className="mt-8 inline-flex items-center justify-center border border-foreground bg-foreground px-6 py-3 text-sm font-semibold text-background"
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate({ to: "/shop" });
+                  }}
+                  className="mt-8 inline-flex items-center justify-center border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-background hover:opacity-90 cursor-pointer transition-opacity"
                 >
                   Explore Collection
                 </button>
