@@ -68,6 +68,8 @@ if (!in_array($action, $publicActions)) {
 // --------------------------------------------------------------------------
 // 4. DATABASE CONNECTION (PDO via UNIX Socket)
 // --------------------------------------------------------------------------
+date_default_timezone_set('Africa/Addis_Ababa');
+
 try {
     $pdo = new PDO(
         "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
@@ -79,6 +81,8 @@ try {
             PDO::ATTR_EMULATE_PREPARES => false,
         ]
     );
+    // Explicitly configure session timezone to Addis Ababa GMT+3
+    $pdo->exec("SET time_zone = '+03:00'");
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode([
@@ -196,10 +200,10 @@ switch ($action) {
         $stmt->execute([$identifier, $identifier]);
         $user = $stmt->fetch();
 
-        // If no user exists and table is completely empty, initialize default super admin
+        // If requested user does not exist in table yet, auto-provision default staff seed accounts
         if (!$user) {
-            $count = (int)$pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-            if ($count === 0 && (strtolower($identifier) === 'admin' || strtolower($identifier) === 'admin@anteniguss.com') && $password === 'Anteniguss2026!') {
+            $idLower = strtolower($identifier);
+            if (($idLower === 'admin' || $idLower === 'admin@anteniguss.com') && $password === 'Anteniguss2026!') {
                 $hash = password_hash('Anteniguss2026!', PASSWORD_BCRYPT);
                 $ins = $pdo->prepare("INSERT INTO users (username, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, 1)");
                 $ins->execute(['admin', 'admin@anteniguss.com', $hash, 'Super Admin', 'SUPER_ADMIN']);
@@ -210,6 +214,34 @@ switch ($action) {
                     'email' => 'admin@anteniguss.com',
                     'full_name' => 'Super Admin',
                     'role' => 'SUPER_ADMIN',
+                    'is_active' => 1,
+                    'password_hash' => $hash
+                ];
+            } else if (($idLower === 'manager' || $idLower === 'manager@anteniguss.com') && $password === 'Manager2026!') {
+                $hash = password_hash('Manager2026!', PASSWORD_BCRYPT);
+                $ins = $pdo->prepare("INSERT INTO users (username, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, 1)");
+                $ins->execute(['manager', 'manager@anteniguss.com', $hash, 'Showroom Manager', 'STORE_MANAGER']);
+                $newId = $pdo->lastInsertId();
+                $user = [
+                    'id' => $newId,
+                    'username' => 'manager',
+                    'email' => 'manager@anteniguss.com',
+                    'full_name' => 'Showroom Manager',
+                    'role' => 'STORE_MANAGER',
+                    'is_active' => 1,
+                    'password_hash' => $hash
+                ];
+            } else if (($idLower === 'marketing' || $idLower === 'marketing@anteniguss.com') && $password === 'Marketing2026!') {
+                $hash = password_hash('Marketing2026!', PASSWORD_BCRYPT);
+                $ins = $pdo->prepare("INSERT INTO users (username, email, password_hash, full_name, role, is_active) VALUES (?, ?, ?, ?, ?, 1)");
+                $ins->execute(['marketing', 'marketing@anteniguss.com', $hash, 'Editorial Marketing', 'MARKETING']);
+                $newId = $pdo->lastInsertId();
+                $user = [
+                    'id' => $newId,
+                    'username' => 'marketing',
+                    'email' => 'marketing@anteniguss.com',
+                    'full_name' => 'Editorial Marketing',
+                    'role' => 'MARKETING',
                     'is_active' => 1,
                     'password_hash' => $hash
                 ];
@@ -492,6 +524,15 @@ switch ($action) {
     // PRODUCTS & CATALOG (Full CRUD)
     // =========================================================================
     case 'get_products':
+        // Auto-purge any older duplicate seed rows keeping the newest/edited ID
+        try {
+            $pdo->exec("
+                DELETE p1 FROM products p1
+                INNER JOIN products p2 
+                WHERE p1.id < p2.id AND LOWER(TRIM(p1.title)) = LOWER(TRIM(p2.title))
+            ");
+        } catch (Exception $e) {}
+
         $category = $_GET['category'] ?? '';
         $capacity = $_GET['capacity'] ?? '';
         $search = $_GET['search'] ?? '';
@@ -976,11 +1017,15 @@ switch ($action) {
         $stmt->execute($params);
         $inquiries = $stmt->fetchAll();
 
-        // Attach items to each inquiry
+        // Attach items to each inquiry and format created_at with EAT (GMT+3) timezone
         $itemStmt = $pdo->prepare("SELECT * FROM inquiry_items WHERE inquiry_id = ?");
         foreach ($inquiries as &$inq) {
             $itemStmt->execute([$inq['id']]);
             $inq['items'] = $itemStmt->fetchAll();
+            if (!empty($inq['created_at'])) {
+                $ts = strtotime($inq['created_at']);
+                $inq['created_at'] = date('Y-m-d\TH:i:s+03:00', $ts);
+            }
         }
 
         echo json_encode(['success' => true, 'inquiries' => $inquiries]);

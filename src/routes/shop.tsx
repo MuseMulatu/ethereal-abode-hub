@@ -102,8 +102,14 @@ function ShopPage() {
   }, []);
 
   const allItems = useMemo(() => {
+    let source: (Product & {
+      categoryType?: string;
+      rating?: number;
+      reviewCount?: number;
+    })[] = [];
+
     if (backendItems.length > 0) {
-      return backendItems.map((bp, idx) => ({
+      source = backendItems.map((bp, idx) => ({
         id: String(bp.id),
         title: bp.title,
         amharicName: bp.amharic_name || undefined,
@@ -115,13 +121,58 @@ function ShopPage() {
         detail: bp.detail || `${bp.seating_capacity || ""} · ${bp.dimensions || ""}`,
         price: bp.price_display,
         image: bp.image_url,
+        wood_options: bp.wood_options,
+        fabric_options: bp.fabric_options,
         span: bp.span || "normal",
         rating: 4.8 + (idx % 3) * 0.1,
         reviewCount: 14 + ((idx * 5) % 30),
       }));
+    } else {
+      source = ALL_CATALOG_PRODUCTS;
     }
-    return ALL_CATALOG_PRODUCTS;
+
+    // Deduplicate by normalized title so older duplicate seed rows are eliminated,
+    // retaining the latest (higher ID or latest edited) version!
+    const seen = new Map<string, typeof source[0]>();
+    for (const item of source) {
+      const key = item.title.trim().toLowerCase();
+      const existing = seen.get(key);
+      if (!existing) {
+        seen.set(key, item);
+      } else {
+        const existingId = Number(existing.id) || 0;
+        const currentId = Number(item.id) || 0;
+        if (currentId >= existingId) {
+          seen.set(key, item);
+        }
+      }
+    }
+    return Array.from(seen.values());
   }, [backendItems]);
+
+  // Dynamically calculate category counts directly from deduplicated items
+  const counts = useMemo(() => {
+    let sofas = 0;
+    let dining = 0;
+    let armchairs = 0;
+    let livingKids = 0;
+
+    for (const item of allItems) {
+      const cat = (item.categoryType || item.category || "").toLowerCase();
+      if (cat.includes("sofa") || cat.includes("soft")) sofas++;
+      else if (cat.includes("dining") || cat.includes("kitchen")) dining++;
+      else if (cat.includes("chair") || cat.includes("armchair")) armchairs++;
+      else if (cat.includes("bed") || cat.includes("living") || cat.includes("kid")) livingKids++;
+    }
+
+    return {
+      all: allItems.length,
+      sofas,
+      dining,
+      armchairs,
+      livingKids,
+    };
+  }, [allItems]);
 
   // Filtered and sorted products
   const filteredProducts = useMemo(() => {
@@ -246,7 +297,7 @@ function ShopPage() {
                     : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
-                All ({ALL_CATALOG_PRODUCTS.length})
+                All ({counts.all})
               </button>
 
               <button
@@ -258,7 +309,7 @@ function ShopPage() {
                     : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
-                Sofas & Sectionals ({catalogueSofas.length})
+                Sofas & Sectionals ({counts.sofas})
               </button>
 
               <button
@@ -270,7 +321,7 @@ function ShopPage() {
                     : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
-                Dining & Tables ({kitchenProducts.length})
+                Dining & Tables ({counts.dining})
               </button>
 
               <button
@@ -282,7 +333,7 @@ function ShopPage() {
                     : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
-                Armchairs ({softProducts.length})
+                Armchairs ({counts.armchairs})
               </button>
 
               <button
@@ -294,7 +345,7 @@ function ShopPage() {
                     : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
-                Living & Beds ({kidsProducts.length})
+                Living & Beds ({counts.livingKids})
               </button>
             </div>
 

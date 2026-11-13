@@ -119,68 +119,76 @@ export function ProductCustomizerModal({
       />
 
       {/* Modal Container with explicit pointer event pass-through */}
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-8 pointer-events-none">
-        <div className="relative w-full max-w-4xl rounded-lg bg-white text-foreground shadow-2xl overflow-hidden border border-border pointer-events-auto">
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-3 sm:p-6 lg:p-8 pointer-events-none">
+        <div className="relative w-full max-w-4xl rounded-xl bg-white text-foreground shadow-2xl overflow-hidden border border-border pointer-events-auto flex flex-col max-h-[92vh]">
           {/* Close button */}
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 z-20 rounded-full bg-white/90 p-2 text-muted-foreground shadow-sm transition-colors hover:bg-white hover:text-foreground"
+            className="absolute top-3.5 right-3.5 z-20 rounded-full bg-white/95 p-2 text-muted-foreground shadow-sm transition-colors hover:bg-stone hover:text-foreground border border-border/60"
             aria-label="Close modal"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
 
-          <div className="grid lg:grid-cols-12">
-            {/* Image section */}
-            <div className="lg:col-span-5 bg-stone relative">
-              <div className="aspect-[4/3] lg:h-full overflow-hidden">
+          <div className="grid lg:grid-cols-12 flex-1 min-h-0 overflow-hidden">
+            {/* Image section — balanced, compact, crisp */}
+            <div className="lg:col-span-5 bg-stone/35 flex flex-col items-center justify-center p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-border relative select-none">
+              <div className="w-full flex items-center justify-center h-44 sm:h-56 lg:h-full max-h-[340px]">
                 <img
                   src={product.image}
                   alt={product.title}
-                  className="h-full w-full object-cover"
+                  className="max-h-full max-w-full object-contain drop-shadow-sm transition-transform duration-300 hover:scale-105"
                 />
               </div>
               {product.seatingCapacity && (
-                <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded border border-border">
+                <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider rounded border border-border text-foreground">
                   {product.seatingCapacity}
                 </div>
               )}
             </div>
 
-            {/* Customization Details */}
-            <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between max-h-[85vh] overflow-y-auto">
-              <div>
-                <span className="eyebrow text-muted-foreground">Made to Order · Addis Ababa</span>
-                <h2 className="display mt-2 text-2xl sm:text-3xl text-foreground">{product.title}</h2>
-                {product.amharicName && (
-                  <p className="font-amharic text-sm text-muted-foreground mt-0.5" lang="am">
-                    {product.amharicName}
-                  </p>
-                )}
+            {/* Customization Details & Sticky Footer */}
+            <div className="lg:col-span-7 flex flex-col min-h-0 overflow-hidden bg-white">
+              {/* Scrollable specs & customizer options */}
+              <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-5">
+                <div>
+                  <span className="eyebrow text-muted-foreground">Made to Order · Addis Ababa</span>
+                  <div className="flex items-baseline justify-between gap-3 mt-1">
+                    <h2 className="display text-xl sm:text-2xl text-foreground font-serif">{product.title}</h2>
+                    <span className="text-sm font-semibold text-foreground/80 whitespace-nowrap">
+                      {product.price || "Ask for price"}
+                    </span>
+                  </div>
+                  {product.amharicName && (
+                    <p className="font-amharic text-xs sm:text-sm text-muted-foreground mt-0.5" lang="am">
+                      {product.amharicName}
+                    </p>
+                  )}
 
-                {product.description && (
-                  <p className="mt-3 text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                    {product.description}
-                  </p>
-                )}
+                  {product.description && (
+                    <p className="mt-2 text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                      {product.description}
+                    </p>
+                  )}
+                </div>
 
                 {/* Dimensions */}
                 {(product.dimensions || product.detail) && (
-                  <div className="mt-4 flex items-start gap-2.5 rounded border border-border bg-stone p-3 text-xs">
+                  <div className="flex items-start gap-2.5 rounded-md border border-border bg-stone/30 p-3 text-xs">
                     <Ruler className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
                     <div>
                       <span className="font-semibold block text-foreground">Standard Dimensions</span>
                       <span className="text-muted-foreground">{product.dimensions || product.detail}</span>
                       <span className="block mt-1 text-[11px] text-muted-foreground italic">
-                        *Custom dimensions scaled to your room floor plan available upon request.
+                        *Custom dimensions tailored to your living space available upon request.
                       </span>
                     </div>
                   </div>
                 )}
 
                 {/* Wood Finish Selector */}
-                <div className="mt-5">
+                <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Wood Finish: <span className="text-foreground font-bold">{selectedWood}</span>
                   </label>
@@ -192,8 +200,8 @@ export function ProductCustomizerModal({
                         onClick={() => setSelectedWood(wood)}
                         className={`text-left p-2.5 rounded border text-xs transition-all cursor-pointer ${
                           selectedWood === wood
-                            ? "border-foreground bg-foreground text-background font-semibold shadow-sm"
-                            : "border-border bg-white text-foreground hover:border-foreground/40 hover:bg-stone"
+                            ? "border-foreground bg-foreground text-background font-semibold shadow-xs"
+                            : "border-border bg-white text-foreground hover:border-foreground/40 hover:bg-stone/40"
                         }`}
                       >
                         <span className="block truncate">{wood}</span>
@@ -203,7 +211,7 @@ export function ProductCustomizerModal({
                 </div>
 
                 {/* Fabric Swatch Selector */}
-                <div className="mt-5">
+                <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Upholstery Fabric: <span className="text-foreground font-bold">{selectedFabric}</span>
                   </label>
@@ -213,10 +221,10 @@ export function ProductCustomizerModal({
                         key={fab}
                         type="button"
                         onClick={() => setSelectedFabric(fab)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded border text-xs transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs transition-all cursor-pointer ${
                           selectedFabric === fab
-                            ? "border-foreground bg-foreground text-background font-semibold shadow-sm"
-                            : "border-border bg-white text-foreground hover:border-foreground/40 hover:bg-stone"
+                            ? "border-foreground bg-foreground text-background font-semibold shadow-xs"
+                            : "border-border bg-white text-foreground hover:border-foreground/40 hover:bg-stone/40"
                         }`}
                       >
                         <span>{fab}</span>
@@ -226,7 +234,7 @@ export function ProductCustomizerModal({
                 </div>
 
                 {/* Custom Notes / Client Specs */}
-                <div className="mt-5">
+                <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Custom Specifications / Size Notes:
                   </label>
@@ -235,58 +243,56 @@ export function ProductCustomizerModal({
                     value={customNotes}
                     onChange={(e) => setCustomNotes(e.target.value)}
                     placeholder="e.g. Need 320cm width, or prefer a darker walnut stain..."
-                    className="w-full rounded border border-border bg-white p-2.5 text-xs text-foreground focus:border-foreground focus:outline-none placeholder:text-muted-foreground/60 transition-colors"
+                    className="w-full rounded-md border border-border bg-white p-2.5 text-xs text-foreground focus:border-foreground focus:outline-none placeholder:text-muted-foreground/60 transition-colors"
                   />
                 </div>
+              </div>
 
-                {/* Quantity */}
-                <div className="mt-5 flex items-center gap-4">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Quantity:
-                  </label>
-                  <div className="flex items-center border border-border rounded bg-white">
+              {/* Sticky Action Footer */}
+              <div className="border-t border-border bg-white px-5 sm:px-7 py-3.5 shrink-0 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
+                <div className="flex items-center gap-3">
+                  {/* Quantity selector */}
+                  <div className="flex items-center border border-border rounded bg-stone/20 shrink-0">
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="px-3.5 py-1 text-sm font-semibold text-foreground hover:bg-stone transition-colors cursor-pointer"
+                      className="px-3 py-2 text-sm font-semibold text-foreground hover:bg-stone/50 transition-colors cursor-pointer"
                       aria-label="Decrease quantity"
                     >
                       -
                     </button>
-                    <span className="px-4 py-1 text-xs font-bold text-foreground min-w-[2.5rem] text-center">
+                    <span className="px-3 py-2 text-xs font-bold text-foreground min-w-[2.2rem] text-center">
                       {quantity}
                     </span>
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => q + 1)}
-                      className="px-3.5 py-1 text-sm font-semibold text-foreground hover:bg-stone transition-colors cursor-pointer"
+                      className="px-3 py-2 text-sm font-semibold text-foreground hover:bg-stone/50 transition-colors cursor-pointer"
                       aria-label="Increase quantity"
                     >
                       +
                     </button>
                   </div>
-                </div>
-              </div>
 
-              {/* Action Button */}
-              <div className="mt-6 pt-5 border-t border-border">
-                <button
-                  type="button"
-                  onClick={handleAddToBag}
-                  disabled={added}
-                  className="w-full inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-90 shadow-sm cursor-pointer"
-                >
-                  {added ? (
-                    <>
-                      <Check className="h-4 w-4" /> Added to Quote Bag
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="h-4 w-4" /> Add to Quote Bag
-                    </>
-                  )}
-                </button>
-                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  {/* Add to Quote Bag button */}
+                  <button
+                    type="button"
+                    onClick={handleAddToBag}
+                    disabled={added}
+                    className="flex-1 inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-90 shadow-sm cursor-pointer rounded"
+                  >
+                    {added ? (
+                      <>
+                        <Check className="h-4 w-4" /> Added to Quote Bag
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="h-4 w-4" /> Add to Quote Bag
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
                   Free consultation & delivery quote included upon submission.
                 </p>
               </div>

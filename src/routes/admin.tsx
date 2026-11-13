@@ -91,6 +91,25 @@ export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
 });
 
+function formatAddisTime(dateStr?: string) {
+  if (!dateStr) return "";
+  let iso = dateStr.trim();
+  if (!iso.includes("Z") && !iso.includes("+") && !iso.match(/-\d\d:\d\d$/)) {
+    iso = iso.replace(" ", "T") + "+03:00";
+  }
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleString("en-US", {
+    timeZone: "Africa/Addis_Ababa",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 function ImageUploadField({
   label,
   value,
@@ -785,7 +804,7 @@ function AuditLogsTab() {
                 filteredLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-stone/20 transition-colors">
                     <td className="px-6 py-3 text-muted-foreground whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleString()}
+                      {formatAddisTime(log.created_at)}
                     </td>
                     <td className="px-6 py-3 font-semibold text-foreground">
                       @{log.user_name || "system"}
@@ -1492,11 +1511,7 @@ function AdminDashboard() {
                           </span>
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {new Date(inq.created_at).toLocaleDateString()} at{" "}
-                            {new Date(inq.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {formatAddisTime(inq.created_at)}
                           </span>
                         </div>
                         <h3 className="display mt-2 text-2xl text-foreground">
