@@ -1,12 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Hammer, MessageCircle, Ruler, ShoppingBag, Sparkles, Truck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, MessageCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-import { HeroBanner } from "@/components/site/HeroBanner";
-import { Reveal } from "@/components/site/Reveal";
-import { brand, catalogueSofas, images, posts, type Product } from "@/data/site";
-import { fetchSiteSettings, getProducts, getSiteSettings } from "@/lib/cms-store";
-import { cn } from "@/lib/utils";
+import { brand, images, posts } from "@/data/site";
+import { fetchSiteSettings, getSiteSettings } from "@/lib/cms-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,72 +28,55 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-/* Sixpenny-inspired Category Gateways — Direct to Shop */
-const categoryGateways = [
+/* Sixpenny-exact Category Silhouettes with Superscript Counts */
+const SIXPENNY_CATEGORIES = [
   {
+    title: "SOFAS",
+    count: "18",
+    image: images.curvedBoucleSofa,
     to: "/shop",
     search: { category: "sofas" },
-    label: "Sofas & Sectionals",
-    amharicLabel: "ሶፋዎች እና ሴክሽናሎች",
-    desc: "Curved modulars, deep 4 & 5-seaters, relaxed linen lounging",
-    image: images.creamSofaHome,
-    count: "36+ Silhouettes",
   },
   {
-    to: "/shop",
-    search: { category: "dining" },
-    label: "Dining & Tables",
-    amharicLabel: "የመመገቢያ ጠረጴዛዎች",
-    desc: "Solid turned-wood tables, dining suites, and credenzas",
-    image: images.diningShowroom,
-    count: "24+ Designs",
-  },
-  {
+    title: "CHAIRS",
+    count: "33",
+    image: images.boucleArmchair,
     to: "/shop",
     search: { category: "armchairs" },
-    label: "Armchairs & Lounges",
-    amharicLabel: "ነጠላ ወንበሮች",
-    desc: "Bouclé reading chairs, wingbacks, and accent seating",
-    image: images.wingbackReading,
-    count: "18+ Pieces",
   },
   {
+    title: "SECTIONALS",
+    count: "72",
+    image: images.curvedSectional,
+    to: "/shop",
+    search: { category: "sofas" },
+  },
+  {
+    title: "BEDS",
+    count: "09",
+    image: images.bedVelvet,
     to: "/shop",
     search: { category: "living-kids" },
-    label: "Living & Bedroom",
-    amharicLabel: "የመኝታ እና የሳሎን እቃዎች",
-    desc: "Tailored upholstered beds, consoles, and storage pieces",
-    image: images.bedVelvet,
-    count: "16+ Pieces",
-  },
-] as const;
-
-const trustPillars = [
-  {
-    icon: Ruler,
-    title: "Bespoke Room Dimensions",
-    desc: "Custom scaled to fit your exact floor plan",
   },
   {
-    icon: Hammer,
-    title: "Handcrafted in Addis Ababa",
-    desc: "Solid hardwood frames & master upholstery",
+    title: "DINING",
+    count: "24",
+    image: images.diningOval,
+    to: "/shop",
+    search: { category: "dining" },
   },
   {
-    icon: Sparkles,
-    title: "20+ Washable Linens & Bouclés",
-    desc: "Touch and test fabric samples at our showroom",
-  },
-  {
-    icon: Truck,
-    title: "White-Glove Delivery & Setup",
-    desc: "Delivered & assembled directly into your room",
+    title: "TABLES",
+    count: "16",
+    image: images.consoleSculpted,
+    to: "/shop",
+    search: { category: "dining" },
   },
 ];
 
 function Home() {
   const [settings, setSettings] = useState(getSiteSettings());
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(catalogueSofas.slice(0, 6));
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSettings(getSiteSettings());
@@ -108,441 +88,311 @@ function Home() {
     return () => window.removeEventListener("ante-settings-updated", handler);
   }, []);
 
-  useEffect(() => {
-    getProducts({ top_picks: true }).then((items) => {
-      if (items && items.length > 0) {
-        setFeaturedProducts(
-          items.slice(0, 6).map((bp) => ({
-            id: String(bp.id),
-            title: bp.title,
-            amharicName: bp.amharic_name || undefined,
-            category: bp.category,
-            seatingCapacity: bp.seating_capacity || undefined,
-            dimensions: bp.dimensions || undefined,
-            description: bp.description || undefined,
-            detail: bp.detail || `${bp.seating_capacity || ""} · ${bp.dimensions || ""}`,
-            price: bp.price_display,
-            image: bp.image_url,
-            span: bp.span || "normal",
-          })),
-        );
-      }
+  const scrollCarousel = (direction: "left" | "right") => {
+    if (!carouselRef.current) return;
+    const distance = 420;
+    carouselRef.current.scrollBy({
+      left: direction === "left" ? -distance : distance,
+      behavior: "smooth",
     });
-  }, []);
+  };
 
   return (
-    <div className="bg-white text-foreground">
-      {/* 1. Hero Section — Sixpenny-style serene, calm, confident */}
-      <HeroBanner
-        variant="card"
-        image={settings.hero?.backgroundImage || images.heroImg5171}
-        amharicEyebrow={settings.hero?.kicker || "አንተ፡ንጉስ · Addis Ababa"}
-        headline={settings.hero?.headline || "Furniture for the modern Ethiopian home."}
-        sub={
-          settings.hero?.subheadline ||
-          "Sofas, armchairs, dining suites and beds, handcrafted in Addis Ababa in your preferred dimensions and fabrics."
-        }
-        ctaLabel="Shop All Collections"
-        ctaTo="/shop"
-        secondaryCtaLabel="Visit Showroom"
-        secondaryCtaTo="#visit"
-      />
+    <div className="bg-[#FAF8F5] text-[#2C2F3C] min-h-screen selection:bg-[#2C2F3C] selection:text-[#FAF8F5]">
+      {/* 0. Top Promo / Announcement Bar */}
+      <div className="border-b border-[#EAE6DE] bg-[#F4F0E8] py-2 text-center">
+        <p className="font-serif text-[11px] sm:text-xs tracking-[0.18em] uppercase text-[#555A68]">
+          Bespoke Furniture Crafted in Addis Ababa · Visit Our Showroom at Abkem Tower
+        </p>
+      </div>
 
-      {/* 2. Direct Category Gateways (Immediately below Hero — Pure Sixpenny Style) */}
-      <section className="mx-auto max-w-[110rem] px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24">
-        <Reveal>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-10 border-b border-border">
-            <div>
-              <span className="eyebrow text-muted-foreground">Direct from the Atelier</span>
-              <h2 className="display mt-2 text-3xl sm:text-4xl lg:text-5xl">Explore by Category</h2>
-            </div>
-            <Link
-              to="/shop"
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground hover:opacity-75 transition-opacity"
-            >
-              <span>View All Pieces ({catalogueSofas.length + 50}+)</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </Reveal>
+      {/* 1. HERO SECTION — Sixpenny "THE GREAT INDOORS" Exact Asymmetric Split */}
+      <section className="mx-auto max-w-[125rem] px-6 sm:px-10 lg:px-16 pt-8 pb-16 sm:pt-14 sm:pb-24">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Left Column: Spaced Serif Title, Subtitle, Arrow Link */}
+          <div className="lg:col-span-5 flex flex-col justify-center py-4 lg:py-12 pr-0 lg:pr-8">
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-[4.25rem] font-normal tracking-[0.1em] uppercase text-[#2C2F3C] leading-[1.08]">
+              {settings.hero?.headline ? (
+                settings.hero.headline
+              ) : (
+                <>
+                  THE GREAT
+                  <br />
+                  INDOORS
+                </>
+              )}
+            </h1>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-          {categoryGateways.map((cat, idx) => (
-            <Reveal key={cat.label} delay={idx * 80}>
+            <p className="font-serif text-sm sm:text-base text-[#555A68] mt-6 sm:mt-8 leading-relaxed max-w-sm">
+              {settings.hero?.subheadline ||
+                "Extraordinary comfort. Timeless designs. Handcrafted in Addis Ababa in your preferred dimensions and fabrics."}
+            </p>
+
+            <div className="mt-8 sm:mt-10">
               <Link
+                to="/shop"
+                search={{ category: "sofas" }}
+                className="group inline-flex items-center gap-2 font-serif text-xs sm:text-sm tracking-[0.18em] uppercase text-[#2C2F3C] hover:opacity-60 transition-opacity"
+              >
+                <span>{settings.hero?.ctaLabel || "Shop Seating"}</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column: Generous Landscape Photography */}
+          <div className="lg:col-span-7">
+            <div className="relative overflow-hidden aspect-[16/11] w-full bg-[#EAE6DE]">
+              <img
+                src={settings.hero?.backgroundImage || images.heroImg5171}
+                alt="Anteniguss Home Living Suite"
+                className="h-full w-full object-cover transition-transform duration-[1200ms] hover:scale-103"
+                priority
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. CATEGORY CAROUSEL — Sixpenny Exact Gallery with Superscript Item Counts */}
+      <section className="border-t border-[#EAE6DE] py-14 sm:py-20">
+        <div className="mx-auto max-w-[125rem] px-6 sm:px-10 lg:px-16">
+          {/* Scrollable Track */}
+          <div
+            ref={carouselRef}
+            className="flex gap-5 sm:gap-7 overflow-x-auto scrollbar-none scroll-smooth pb-4 select-none"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {SIXPENNY_CATEGORIES.map((cat) => (
+              <Link
+                key={cat.title}
                 to={cat.to}
                 search={cat.search}
-                className="group block overflow-hidden rounded-sm border border-border bg-white transition-all duration-300 hover:border-foreground/30 hover:shadow-md"
+                className="group flex-none w-[70vw] sm:w-[38vw] lg:w-[22vw] block cursor-pointer"
               >
-                {/* Photo container with gentle Sixpenny zoom */}
-                <div className="relative aspect-[3/4] overflow-hidden bg-stone">
+                <div className="relative aspect-[3/4] overflow-hidden bg-[#EAE6DE]">
                   <img
                     src={cat.image}
-                    alt={cat.label}
+                    alt={cat.title}
                     loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-[1200ms] ease-cinematic group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-[1000ms] ease-out group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-black/10 transition-colors duration-500 group-hover:bg-black/20" />
-                  <span className="absolute top-4 left-4 rounded bg-white/90 backdrop-blur-sm px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground border border-border">
-                    {cat.count}
+                </div>
+                <div className="mt-4 flex items-start gap-1">
+                  <span className="font-serif text-2xl sm:text-3xl font-light tracking-[0.08em] uppercase text-[#2C2F3C] group-hover:opacity-75 transition-opacity">
+                    {cat.title}
                   </span>
-                </div>
-
-                {/* Gateway Body */}
-                <div className="p-5">
-                  <div className="flex items-baseline justify-between">
-                    <h3 className="text-lg font-semibold tracking-tight text-foreground group-hover:underline">
-                      {cat.label}
-                    </h3>
-                  </div>
-                  {cat.amharicLabel && (
-                    <p className="font-amharic text-xs text-muted-foreground mt-0.5" lang="am">
-                      {cat.amharicLabel}
-                    </p>
-                  )}
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                    {cat.desc}
-                  </p>
-                  <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                    <span>Shop {cat.label}</span>
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
+                  <sup className="font-serif text-xs tracking-normal text-[#555A68] opacity-80 mt-1">
+                    {cat.count}
+                  </sup>
                 </div>
               </Link>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. Curated Signature Silhouettes (Direct to Shop & Quote) */}
-      <section className="border-t border-border bg-white py-16 sm:py-20 lg:py-24">
-        <div className="mx-auto max-w-[110rem] px-6 sm:px-10 lg:px-16">
-          <Reveal>
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-8">
-              <div>
-                <span className="eyebrow text-muted-foreground">Signature Silhouettes</span>
-                <h2 className="display mt-2 text-3xl sm:text-4xl lg:text-5xl">
-                  Bespoke Made-to-Order Pieces
-                </h2>
-                <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-                  Each model is custom-scaled to your floor plan and upholstered in your choice of
-                  heavy-duty textured bouclé or relaxed natural linen.
-                </p>
-              </div>
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 border border-foreground bg-foreground px-6 py-3 text-xs font-semibold uppercase tracking-wider text-background hover:opacity-85 transition-opacity"
-              >
-                <ShoppingBag className="h-3.5 w-3.5" />
-                <span>Open Furniture Catalog</span>
-              </Link>
-            </div>
-          </Reveal>
-
-          {/* Curated 3-column clean white cards */}
-          <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredProducts.map((product, idx) => (
-              <Reveal key={product.id} delay={idx * 70}>
-                <div className="group flex flex-col justify-between overflow-hidden rounded-sm border border-border bg-white transition-all duration-300 hover:border-foreground/30 hover:shadow-lg">
-                  {/* Image container */}
-                  <div className="relative aspect-[4/3] overflow-hidden bg-stone">
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-700 ease-cinematic group-hover:scale-105"
-                    />
-                    {product.seatingCapacity && (
-                      <span className="absolute top-3 left-3 rounded bg-white/95 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground border border-border">
-                        {product.seatingCapacity.replace(" (custom configuration)", "")}
-                      </span>
-                    )}
-                    <span className="absolute bottom-3 right-3 rounded bg-ink/90 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-white">
-                      {product.price || "Made to Order"}
-                    </span>
-                  </div>
-
-                  {/* Details */}
-                  <div className="flex flex-1 flex-col justify-between p-6">
-                    <div>
-                      <span className="eyebrow text-[10px] text-muted-foreground uppercase">
-                        {product.category || "Living Suite"} · Made in Addis
-                      </span>
-                      <h3 className="display mt-2 text-xl text-foreground group-hover:underline">
-                        {product.title}
-                      </h3>
-                      {product.amharicName && (
-                        <p className="font-amharic text-xs text-muted-foreground mt-0.5" lang="am">
-                          {product.amharicName}
-                        </p>
-                      )}
-                      <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground line-clamp-2">
-                        {product.dimensions || product.detail || "Tailored dimensions with high-resilience foam and hardwood internal frame."}
-                      </p>
-                    </div>
-
-                    {/* Action buttons directly into /shop */}
-                    <div className="mt-6 pt-4 border-t border-border flex items-center gap-2">
-                      <Link
-                        to="/shop"
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 border border-foreground bg-foreground py-2.5 px-4 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-85"
-                      >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        <span>Customize in Shop</span>
-                      </Link>
-                      <a
-                        href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
-                          `Hello Anteniguss Home, I would like to inquire about the ${product.title} and explore custom fabric options.`,
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 border border-border text-muted-foreground transition-colors hover:text-foreground hover:bg-stone rounded-sm"
-                        title="Inquire directly on WhatsApp"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* 4. Atelier Craftsmanship Guarantee — Concise, Zero Fluff */}
-      <section className="border-t border-border bg-stone py-16 sm:py-20 lg:py-24">
-        <div className="mx-auto max-w-[110rem] px-6 sm:px-10 lg:px-16">
-          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-            {/* Visual */}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-sm border border-border bg-white shadow-sm">
-              <img
-                src={settings.made_to_order?.imageUrl || (settings as any).madeToOrder?.imageUrl || images.curvedSectional}
-                alt="Anteniguss Made to order furniture workshop in Addis Ababa"
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
-            </div>
+          {/* Bottom Bar: "Explore all categories →" + Arrow Buttons */}
+          <div className="mt-8 flex items-center justify-between pt-4 border-t border-[#EAE6DE]/70">
+            <Link
+              to="/shop"
+              className="group inline-flex items-center gap-2 font-serif text-xs sm:text-sm tracking-[0.16em] uppercase text-[#2C2F3C] hover:opacity-60 transition-opacity"
+            >
+              <span>Explore all categories</span>
+              <span className="transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
 
-            {/* Content */}
-            <Reveal>
-              <div className="flex flex-col gap-5">
-                <span className="eyebrow text-muted-foreground">The Made-to-Order Promise</span>
-                <h2 className="display text-3xl sm:text-4xl lg:text-5xl text-foreground">
-                  {settings.made_to_order?.title || (settings as any).madeToOrder?.title || "Custom Built to Fit Your Floor Plan."}
-                </h2>
-                <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  {settings.made_to_order?.description || (settings as any).madeToOrder?.description ||
-                    "Unlike mass-produced imports, every sofa, armchair, and dining table at Anteniguss Home is individually built by our master craftsmen in Addis Ababa. You choose the exact length, cushion firmness, and upholstery fabric."}
-                </p>
-
-                {/* 4 Trust Pillars */}
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  {trustPillars.map((tp) => {
-                    const Icon = tp.icon;
-                    return (
-                      <div key={tp.title} className="flex items-start gap-3 rounded border border-border/70 bg-white p-4">
-                        <Icon className="h-5 w-5 shrink-0 text-foreground stroke-[1.7] mt-0.5" />
-                        <div>
-                          <b className="block text-xs font-semibold text-foreground uppercase tracking-wider">
-                            {tp.title}
-                          </b>
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            {tp.desc}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <Link
-                    to="/shop"
-                    className="inline-flex items-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-background hover:opacity-85 transition-opacity"
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                    <span>Browse All Shop Items</span>
-                  </Link>
-                  <a
-                    href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
-                      "Hello Anteniguss Home, I would like to send my room floor plan and get custom sizing recommendations.",
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 border border-border bg-white px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-stone transition-colors"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    <span>Send Room Plan on WhatsApp</span>
-                  </a>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. Showroom Experience (Abkem Tower, 22, Addis Ababa) */}
-      <section id="visit" className="border-t border-border bg-white py-16 sm:py-20 lg:py-24">
-        <div className="mx-auto max-w-[110rem] px-6 sm:px-10 lg:px-16">
-          <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] lg:items-center">
-            <Reveal>
-              <div className="flex flex-col gap-5">
-                <span className="eyebrow text-muted-foreground">Showroom Experience</span>
-                <h2 className="display text-3xl sm:text-4xl lg:text-5xl text-foreground">
-                  {settings.showroom?.headline || "Feel the Fabrics in Person."}
-                </h2>
-                <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  {settings.showroom?.subheadline ||
-                    "Our showroom at Abkem Tower displays full living and dining suites. Sit on every sofa, compare soft linen against textured bouclé, and consult directly with our furniture designers."}
-                </p>
-
-                <div className="my-2 divide-y divide-border border-y border-border">
-                  <div className="py-3.5">
-                    <span className="eyebrow text-[10px] text-muted-foreground uppercase">Showroom Address</span>
-                    <p className="mt-1 text-sm font-medium text-foreground">
-                      {settings.showroom?.address || brand.address}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground font-amharic" lang="am">
-                      {brand.addressAm}
-                    </p>
-                  </div>
-                  <div className="py-3.5 flex flex-wrap gap-8">
-                    <div>
-                      <span className="eyebrow text-[10px] text-muted-foreground uppercase">Direct Concierge</span>
-                      <p className="mt-1 text-sm font-medium text-foreground">
-                        {settings.showroom?.phone || brand.phone}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="eyebrow text-[10px] text-muted-foreground uppercase">Viewing Hours</span>
-                      <p className="mt-1 text-sm font-medium text-foreground">
-                        Mon – Sat: 9:00 AM – 7:00 PM (Sun by Appt)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <a
-                    href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
-                      "Hello Anteniguss Home, I would like to schedule a visit to the Abkem Tower showroom.",
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-background hover:opacity-85 transition-opacity"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    <span>Chat on WhatsApp</span>
-                  </a>
-                  <a
-                    href="https://www.google.com/maps/search/?api=1&query=Abkem+Tower+Meskel+Flower+Addis+Ababa"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 border border-border bg-white px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-stone transition-colors"
-                  >
-                    <span>Get Directions (Google Maps)</span>
-                  </a>
-                </div>
-              </div>
-            </Reveal>
-
-            {/* Showroom Photo */}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-sm border border-border bg-stone">
-              <img
-                src={settings.showroom?.imageUrl || images.bunaGuests}
-                alt="Anteniguss Home Showroom, Abkem Tower Ground Floor"
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => scrollCarousel("left")}
+                aria-label="Scroll left"
+                className="flex h-9 w-9 items-center justify-center text-[#2C2F3C] hover:opacity-50 transition-opacity cursor-pointer text-lg font-serif"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollCarousel("right")}
+                aria-label="Scroll right"
+                className="flex h-9 w-9 items-center justify-center text-[#2C2F3C] hover:opacity-50 transition-opacity cursor-pointer text-lg font-serif"
+              >
+                →
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. Design Journal — Direct SEO-friendly links to /blog/$slug */}
-      <section className="border-t border-border bg-stone py-16 sm:py-20 lg:py-24">
-        <div className="mx-auto max-w-[110rem] px-6 sm:px-10 lg:px-16">
-          <Reveal>
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-10 border-b border-border">
-              <div>
-                <span className="eyebrow text-muted-foreground">Design Journal & Guides</span>
-                <h2 className="display mt-2 text-3xl sm:text-4xl lg:text-5xl">Notes on Living Well</h2>
+      {/* 3. SPLIT SECTION 1 — Sixpenny Exact "IN STOCK" / "MADE TO ORDER" */}
+      <section className="border-t border-[#EAE6DE] py-16 sm:py-24">
+        <div className="mx-auto max-w-[125rem] px-6 sm:px-10 lg:px-16">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-center">
+            {/* Left Photo */}
+            <div className="lg:col-span-6">
+              <div className="relative aspect-[4/3] sm:aspect-[1/1] overflow-hidden bg-[#EAE6DE]">
+                <img
+                  src={images.bedVelvet}
+                  alt="Anteniguss Home Bedroom Piece"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-1000 hover:scale-103"
+                />
               </div>
+            </div>
+
+            {/* Right Centered Text */}
+            <div className="lg:col-span-6 flex flex-col items-center justify-center text-center px-4 sm:px-12">
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase text-[#2C2F3C]">
+                IN STOCK
+              </h2>
+              <p className="font-serif text-sm sm:text-base text-[#555A68] mt-6 leading-relaxed max-w-md">
+                Don't rush, but our signature showroom pieces are handcrafted and ready to deliver to your residence within 1–2 weeks.
+              </p>
+              <Link
+                to="/shop"
+                search={{ category: "all" }}
+                className="group inline-flex items-center gap-2 font-serif text-xs sm:text-sm tracking-[0.18em] uppercase text-[#2C2F3C] mt-8 hover:opacity-60 transition-opacity"
+              >
+                <span>Shop in stock</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. FULL-WIDTH ATMOSPHERIC BANNER — Sixpenny Exact "SWATCHES" */}
+      <section className="border-t border-[#EAE6DE] bg-[#9E9689] text-[#FAF8F5]">
+        <div className="mx-auto max-w-[125rem] px-6 sm:px-10 lg:px-16 py-20 sm:py-28 flex flex-col md:flex-row md:items-baseline md:justify-between gap-6">
+          <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.18em] uppercase text-white/95">
+            SWATCHES
+          </h2>
+          <a
+            href="#visit"
+            className="group inline-flex items-center gap-2 font-serif text-xs sm:text-sm tracking-[0.16em] uppercase text-white/90 hover:text-white transition-colors"
+          >
+            <span>Touch and test 20+ Belgian linens, bouclés, and full-grain leathers at our showroom</span>
+            <span className="transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </span>
+          </a>
+        </div>
+      </section>
+
+      {/* 5. SPLIT SECTION 2 — Sixpenny Exact "CUSTOMIZATION" */}
+      <section className="border-t border-[#EAE6DE] py-16 sm:py-24">
+        <div className="mx-auto max-w-[125rem] px-6 sm:px-10 lg:px-16">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-center">
+            {/* Left Centered Text */}
+            <div className="lg:col-span-6 flex flex-col items-center justify-center text-center px-4 sm:px-12 order-2 lg:order-1">
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase text-[#2C2F3C]">
+                CUSTOMIZATION
+              </h2>
+              <p className="font-serif text-sm sm:text-base text-[#555A68] mt-6 leading-relaxed max-w-md">
+                Make it just the way you want it. Solid dried hardwood carpentry, high-resilience comfort layers, and dimensions tailored to your room layout.
+              </p>
+              <Link
+                to="/shop"
+                className="group inline-flex items-center gap-2 font-serif text-xs sm:text-sm tracking-[0.18em] uppercase text-[#2C2F3C] mt-8 hover:opacity-60 transition-opacity"
+              >
+                <span>Explore customization</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
+            </div>
+
+            {/* Right Photo */}
+            <div className="lg:col-span-6 order-1 lg:order-2">
+              <div className="relative aspect-[4/3] overflow-hidden bg-[#EAE6DE]">
+                <img
+                  src={images.curvedSectional}
+                  alt="Custom Modular Sectional"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-1000 hover:scale-103"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. SPLIT SECTION 3 — Sixpenny Exact "THE LIBRARY" */}
+      <section className="border-t border-[#EAE6DE] py-16 sm:py-24">
+        <div className="mx-auto max-w-[125rem] px-6 sm:px-10 lg:px-16">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-center">
+            {/* Left Centered Text */}
+            <div className="lg:col-span-6 flex flex-col items-center justify-center text-center px-4 sm:px-12">
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase text-[#2C2F3C]">
+                THE LIBRARY
+              </h2>
+              <p className="font-serif text-sm sm:text-base text-[#555A68] mt-6 leading-relaxed max-w-md">
+                Unsure where to begin? Here's our master craftsmen's guide to fabrics, room proportions, and living in contemporary Addis Ababa.
+              </p>
               <Link
                 to="/blog"
-                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground hover:opacity-75 transition-opacity"
+                className="group inline-flex items-center gap-2 font-serif text-xs sm:text-sm tracking-[0.18em] uppercase text-[#2C2F3C] mt-8 hover:opacity-60 transition-opacity"
               >
-                <span>Read All Journal Articles</span>
-                <ArrowRight className="h-3.5 w-3.5" />
+                <span>Learn more</span>
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
               </Link>
             </div>
-          </Reveal>
 
-          <div className="mt-10 grid gap-8 sm:grid-cols-3">
-            {posts.slice(0, 3).map((post, idx) => (
-              <Reveal key={post.slug} delay={idx * 90}>
-                {/* DIRECT SEMANTIC LINK TO /blog/$slug */}
-                <Link
-                  to="/blog/$slug"
-                  params={{ slug: post.slug }}
-                  className="group block overflow-hidden rounded-sm border border-border bg-white transition-all duration-300 hover:border-foreground/30 hover:shadow-md"
-                >
-                  <div className="aspect-[16/10] overflow-hidden bg-stone">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-700 ease-cinematic group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <span className="eyebrow text-[10px] text-muted-foreground">
-                      {post.category} · {post.date}
-                    </span>
-                    <h3 className="display mt-2.5 text-xl text-foreground group-hover:underline">
-                      {post.title}
-                    </h3>
-                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground line-clamp-2">
-                      {post.excerpt}
-                    </p>
-                    <div className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                      <span>Read Story</span>
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
+            {/* Right Tall Still-Life Photo */}
+            <div className="lg:col-span-6 flex justify-center">
+              <div className="relative aspect-[3/4] max-w-md w-full overflow-hidden bg-[#EAE6DE]">
+                <img
+                  src={images.journalFeature}
+                  alt="Anteniguss Home Design Journal"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-1000 hover:scale-103"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 7. Quiet Luxury Consultation Strip */}
-      <section className="border-t border-border bg-white py-16 text-center">
-        <div className="mx-auto max-w-2xl px-6">
-          <Reveal>
-            <span className="eyebrow text-muted-foreground">Tailored to Your Interior</span>
-            <h2 className="display mt-3 text-3xl sm:text-4xl">Ready to Customize Your Living Space?</h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Explore our full catalogue of sofas, dining tables, and accent furniture, or request a custom quote with your exact room dimensions.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 border border-foreground bg-foreground px-8 py-3.5 text-xs font-semibold uppercase tracking-wider text-background hover:opacity-85 transition-opacity"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                <span>Explore Full Catalog</span>
-              </Link>
-              <Link
-                to="/contact"
-                className="inline-flex items-center gap-2 border border-border bg-white px-8 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-stone transition-colors"
-              >
-                <span>Book a Consultation</span>
-              </Link>
-            </div>
-          </Reveal>
+      {/* 7. SHOWROOM EXPERIENCE — "VISIT US" at Abkem Tower */}
+      <section id="visit" className="border-t border-[#EAE6DE] py-16 sm:py-24">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <span className="font-serif text-xs tracking-[0.2em] uppercase text-[#555A68]">
+            Meskel Flower · Addis Ababa
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-light tracking-[0.12em] uppercase text-[#2C2F3C] mt-3">
+            VISIT THE SHOWROOM
+          </h2>
+          <p className="font-serif text-sm sm:text-base text-[#555A68] mt-5 leading-relaxed">
+            Experience our full collection of sofas, dining sets, and fabrics in person at Abkem Tower. Compare soft Belgian linen against textured bouclé, and consult directly with our furniture designers.
+          </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs font-serif tracking-widest uppercase">
+            <a
+              href={`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(
+                "Hello Anteniguss Home, I would like to schedule a visit to the Abkem Tower showroom.",
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border border-[#2C2F3C] bg-[#2C2F3C] px-8 py-3.5 text-[#FAF8F5] hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>Chat on WhatsApp</span>
+            </a>
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Abkem+Tower+Meskel+Flower+Addis+Ababa"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border border-[#2C2F3C] px-8 py-3.5 text-[#2C2F3C] hover:bg-[#2C2F3C] hover:text-[#FAF8F5] transition-colors"
+            >
+              <span>Get Directions</span>
+            </a>
+          </div>
         </div>
       </section>
     </div>
