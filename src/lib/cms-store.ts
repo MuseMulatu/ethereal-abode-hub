@@ -537,6 +537,83 @@ export async function getBlogPosts(filters?: {
   return getDynamicBlogPosts();
 }
 
+export async function getBlogPostBySlug(slug: string): Promise<DynamicBlogPost | null> {
+  const cleanSlug = (slug || "").trim().toLowerCase();
+  if (!cleanSlug) return null;
+
+  // 1. Fetch from live API bridge
+  if (BRIDGE_URL) {
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=get_post&slug=${encodeURIComponent(cleanSlug)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.post) {
+          return json.post;
+        }
+      }
+    } catch (e) {
+      console.warn("API Bridge getBlogPostBySlug failed:", e);
+    }
+  }
+
+  // 2. Check local dynamic posts
+  const localPosts = getDynamicBlogPosts();
+  const foundLocal = localPosts.find((p) => p.slug.toLowerCase() === cleanSlug);
+  if (foundLocal) return foundLocal;
+
+  // 3. Fallback to site static articles
+  if (featuredPost.slug.toLowerCase() === cleanSlug) {
+    return {
+      title: featuredPost.title,
+      slug: featuredPost.slug,
+      category: featuredPost.category,
+      excerpt: featuredPost.excerpt,
+      content: `${featuredPost.excerpt}
+
+In contemporary Addis Ababa, modern living spaces require both timeless materials and flexible sizing. At our atelier in the heart of the city, we craft bespoke furniture designed around your exact lifestyle and architectural layout.
+
+Every home in Addis Ababa is shaped differently — from sprawling Bole residences to modern Kazanchis apartments. That is why every sofa, dining set and armchair in our collection is made to order in the exact dimensions your room needs, using kiln-dried solid hardwood carpentry and imported Belgian linen, textured bouclé, and supple Ethiopian leather.
+
+Proportions define peace of mind in a home. When seating is custom tailored, circulation paths flow naturally, daylight bounces off textured weaves, and the living room becomes a serene sanctuary.
+
+Visit our showroom at Abkem Tower or speak directly with our workshop concierge to begin tailoring your home.`,
+      cover_image_url: featuredPost.image,
+      author_name: "Anteniguss Atelier",
+      read_time: featuredPost.readTime,
+      status: "published",
+      published_at: featuredPost.date,
+      meta_title: `${featuredPost.title} — Anteniguss Home Journal`,
+      meta_description: featuredPost.excerpt,
+    };
+  }
+
+  const foundStatic = posts.find((p) => p.slug.toLowerCase() === cleanSlug);
+  if (foundStatic) {
+    return {
+      title: foundStatic.title,
+      slug: foundStatic.slug,
+      category: foundStatic.category,
+      excerpt: foundStatic.excerpt,
+      content: `${foundStatic.excerpt}
+
+Understanding proportions and materiality is central to our workshop philosophy in Addis Ababa. When designing for bespoke residential interiors, we prioritize durable solid frames, ergonomic contours, and fabrics that stand up to daily life while retaining tactile warmth.
+
+Whether you are furnishing a new apartment or redesigning your living room suite, our design team is available for custom room measurement consultations across Addis Ababa.
+
+Solid kiln-dried hardwoods such as Wanza (Cordia africana), Stained Ash, and Natural Teak provide an enduring foundation. Paired with high-resilience memory-foam cores and removable, dry-cleanable slipcovers or tailored Belgian linen upholstery, each piece is an investment for generations of gatherings.`,
+      cover_image_url: foundStatic.image,
+      author_name: "Design Studio",
+      read_time: foundStatic.readTime,
+      status: "published",
+      published_at: foundStatic.date,
+      meta_title: `${foundStatic.title} — Anteniguss Home Journal`,
+      meta_description: foundStatic.excerpt,
+    };
+  }
+
+  return null;
+}
+
 export async function createBlogPost(
   post: Omit<DynamicBlogPost, "id" | "created_at">,
 ): Promise<boolean> {

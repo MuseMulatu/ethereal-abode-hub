@@ -57,7 +57,7 @@ export function Navbar() {
         className={cn(
           "fixed inset-x-0 top-0 z-40 transition-all duration-700 ease-cinematic",
           solid
-            ? "border-b border-border bg-background/92 backdrop-blur-md"
+            ? "border-b border-border bg-white/95 backdrop-blur-md"
             : "border-b border-transparent bg-transparent",
         )}
       >
@@ -139,7 +139,7 @@ export function Navbar() {
 
         <div
           className={cn(
-            "overflow-hidden border-border bg-background transition-[max-height] duration-700 ease-cinematic lg:hidden",
+            "overflow-hidden border-border bg-white transition-[max-height] duration-700 ease-cinematic lg:hidden",
             open ? "max-h-[38rem] border-t" : "max-h-0",
           )}
         >
@@ -148,27 +148,24 @@ export function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className="display border-b border-border py-3.5 text-2xl text-foreground last:border-b-0"
+                className="display border-b border-border py-3.5 text-2xl text-foreground last:border-b-0 hover:text-foreground/75"
               >
                 {link.label}
               </Link>
             ))}
             <Link
               to="/admin"
-              className="eyebrow mt-4 text-xs tracking-widest text-muted-foreground uppercase hover:text-foreground"
+              className="eyebrow mt-5 text-xs tracking-widest text-muted-foreground uppercase hover:text-foreground"
             >
-              Showroom Admin Portal →
+              Showroom Staff Portal →
             </Link>
-            <a
-              href="/anteniguss-look-book-2026.pdf"
-              download="Anteniguss-Look-Book-2026.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-sm font-semibold text-background transition-opacity hover:opacity-85"
+            <Link
+              to="/shop"
+              className="mt-6 inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-85"
             >
-              <Download className="h-4 w-4" />
-              Download 2026 Look Book
-            </a>
+              <ShoppingBag className="h-4 w-4" />
+              Browse Catalog & Customize
+            </Link>
           </nav>
         </div>
       </header>

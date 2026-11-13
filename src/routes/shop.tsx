@@ -15,6 +15,9 @@ import {
 import { getProducts, type BackendProduct } from "@/lib/cms-store";
 
 export const Route = createFileRoute("/shop")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    category: (search.category as string) || "all",
+  }),
   head: () => ({
     meta: [
       { title: "Furniture Catalog & Made-to-Order Collection — Anteniguss Home" },
@@ -67,11 +70,18 @@ const ALL_CATALOG_PRODUCTS: (Product & {
 ];
 
 function ShopPage() {
+  const { category: initialCategory } = Route.useSearch();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory || "all");
   const [selectedCapacity, setSelectedCapacity] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("featured");
   const [backendItems, setBackendItems] = useState<BackendProduct[]>([]);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
 
   // Drawer & modal state
   const [customizerProduct, setCustomizerProduct] = useState<Product | null>(null);
@@ -118,8 +128,17 @@ function ShopPage() {
     return allItems
       .filter((item) => {
         // Category filter
-        if (selectedCategory !== "all" && item.categoryType !== selectedCategory) {
-          return false;
+        if (selectedCategory !== "all") {
+          const itemCat = (item.categoryType || item.category || "").toLowerCase();
+          const target = selectedCategory.toLowerCase();
+          const match =
+            itemCat === target ||
+            (target === "sofas" && (itemCat.includes("sofa") || itemCat.includes("soft"))) ||
+            (target === "dining" && (itemCat.includes("dining") || itemCat.includes("kitchen"))) ||
+            (target === "armchairs" && (itemCat.includes("armchair") || itemCat.includes("chair"))) ||
+            (target === "living-kids" &&
+              (itemCat.includes("bed") || itemCat.includes("living") || itemCat.includes("kid")));
+          if (!match) return false;
         }
 
         // Capacity filter
@@ -161,7 +180,7 @@ function ShopPage() {
   return (
     <>
       {/* Hero Header */}
-      <section className="border-b border-border bg-stone/40 pt-28 pb-8 sm:px-10 sm:pt-32 lg:px-16 lg:pb-10">
+      <section className="border-b border-border bg-white pt-20 pb-6 sm:px-10 sm:pt-24 lg:px-16 lg:pb-8">
         <div className="mx-auto max-w-[110rem] px-6">
           <Reveal>
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
@@ -170,8 +189,8 @@ function ShopPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                   Look Book 2026 Collection · Addis Ababa
                 </span>
-                <h1 className="display mt-4 text-4xl sm:text-5xl lg:text-7xl">Furniture Catalog</h1>
-                <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                <h1 className="display mt-3 text-3xl sm:text-4xl lg:text-6xl">Furniture Catalog</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                   Explore made-to-order sofas, dining suites, and handcrafted pieces made right here
                   in Addis Ababa. Select your favorite items to request a custom dimension and
                   fabric quote.
@@ -182,7 +201,7 @@ function ShopPage() {
               <button
                 type="button"
                 onClick={() => setIsBagOpen(true)}
-                className="self-start md:self-auto inline-flex items-center gap-2.5 border border-foreground bg-foreground px-6 py-3.5 text-sm font-semibold text-background transition-opacity hover:opacity-90 shadow-sm"
+                className="self-start md:self-auto inline-flex items-center gap-2.5 border border-foreground bg-foreground px-6 py-3 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-90 shadow-sm"
               >
                 <ShoppingBag className="h-4 w-4" />
                 <span>View Quote Bag</span>
@@ -193,9 +212,9 @@ function ShopPage() {
       </section>
 
       {/* Filter and Search Bar */}
-      <section className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="mx-auto max-w-[110rem] px-6 py-4 sm:px-10 lg:px-16">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <section className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur-md">
+        <div className="mx-auto max-w-[110rem] px-6 py-3.5 sm:px-10 lg:px-16">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -204,7 +223,7 @@ function ShopPage() {
                 placeholder="Search sofas, dining sets, materials..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-md border border-input bg-stone/30 py-2.5 pl-10 pr-4 text-sm focus:border-foreground focus:outline-none focus:bg-background transition-colors"
+                className="w-full rounded border border-border bg-white py-2 pl-10 pr-4 text-xs focus:border-foreground focus:outline-none transition-colors"
               />
               {searchQuery && (
                 <button
@@ -221,22 +240,22 @@ function ShopPage() {
               <button
                 type="button"
                 onClick={() => setSelectedCategory("all")}
-                className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
+                className={`px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
                   selectedCategory === "all"
                     ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-stone/30 text-muted-foreground hover:text-foreground"
+                    : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
-                All Pieces ({ALL_CATALOG_PRODUCTS.length})
+                All ({ALL_CATALOG_PRODUCTS.length})
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedCategory("sofas")}
-                className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
+                className={`px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
                   selectedCategory === "sofas"
                     ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-stone/30 text-muted-foreground hover:text-foreground"
+                    : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
                 Sofas & Sectionals ({catalogueSofas.length})
@@ -245,10 +264,10 @@ function ShopPage() {
               <button
                 type="button"
                 onClick={() => setSelectedCategory("dining")}
-                className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
+                className={`px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
                   selectedCategory === "dining"
                     ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-stone/30 text-muted-foreground hover:text-foreground"
+                    : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
                 Dining & Tables ({kitchenProducts.length})
@@ -257,13 +276,25 @@ function ShopPage() {
               <button
                 type="button"
                 onClick={() => setSelectedCategory("armchairs")}
-                className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
+                className={`px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
                   selectedCategory === "armchairs"
                     ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-stone/30 text-muted-foreground hover:text-foreground"
+                    : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
                 }`}
               >
                 Armchairs ({softProducts.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("living-kids")}
+                className={`px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider rounded border transition-colors shrink-0 ${
+                  selectedCategory === "living-kids"
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border bg-white text-muted-foreground hover:text-foreground hover:border-foreground/50"
+                }`}
+              >
+                Living & Beds ({kidsProducts.length})
               </button>
             </div>
 
@@ -275,7 +306,7 @@ function ShopPage() {
                 <select
                   value={selectedCapacity}
                   onChange={(e) => setSelectedCapacity(e.target.value)}
-                  className="rounded border border-input bg-stone/30 py-1.5 px-2.5 text-xs text-foreground focus:outline-none"
+                  className="rounded border border-border bg-white py-1.5 px-2.5 text-xs text-foreground focus:outline-none"
                 >
                   <option value="all">All Sizes</option>
                   <option value="5">5-Seater</option>
@@ -287,7 +318,7 @@ function ShopPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="rounded border border-input bg-stone/30 py-1.5 px-2.5 text-xs text-foreground focus:outline-none"
+                className="rounded border border-border bg-white py-1.5 px-2.5 text-xs text-foreground focus:outline-none"
               >
                 <option value="featured">Featured First</option>
                 <option value="rating">Highest Rated</option>
@@ -324,7 +355,7 @@ function ShopPage() {
               <Reveal key={item.id} delay={(index % 4) * 60}>
                 <div
                   onClick={() => handleOpenCustomizer(item)}
-                  className="group flex flex-col justify-between rounded-lg border border-border bg-stone/20 overflow-hidden cursor-pointer transition-all duration-300 hover:border-foreground/40 hover:shadow-lg"
+                  className="group flex flex-col justify-between rounded-sm border border-border bg-white overflow-hidden cursor-pointer transition-all duration-300 hover:border-foreground/30 hover:shadow-lg"
                 >
                   {/* Image container */}
                   <div className="relative aspect-[4/3] overflow-hidden bg-stone">
@@ -337,13 +368,13 @@ function ShopPage() {
 
                     {/* Capacity badge */}
                     {item.seatingCapacity && (
-                      <span className="absolute top-3 left-3 rounded bg-background/90 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground border border-border pointer-events-none">
+                      <span className="absolute top-3 left-3 rounded bg-white/95 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-foreground border border-border pointer-events-none">
                         {item.seatingCapacity.replace(" (custom configuration)", "")}
                       </span>
                     )}
 
                     {/* Price / Quote badge */}
-                    <span className="absolute bottom-3 right-3 rounded bg-ink/80 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-ink-foreground pointer-events-none">
+                    <span className="absolute bottom-3 right-3 rounded bg-ink/85 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-white pointer-events-none">
                       {item.price || "Made to Order"}
                     </span>
                   </div>
@@ -370,7 +401,7 @@ function ShopPage() {
                       </h3>
 
                       {item.amharicName && (
-                        <p className="font-amharic text-xs text-muted-foreground mt-0.5">
+                        <p className="font-amharic text-xs text-muted-foreground mt-0.5" lang="am">
                           {item.amharicName}
                         </p>
                       )}
@@ -389,7 +420,7 @@ function ShopPage() {
                           e.stopPropagation();
                           handleOpenCustomizer(item);
                         }}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded border border-foreground bg-foreground py-2.5 px-3 text-xs font-semibold text-background transition-opacity hover:opacity-90"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded border border-foreground bg-foreground py-2.5 px-3 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-90"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
                         <span>Customize & Quote</span>

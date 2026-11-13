@@ -36,38 +36,38 @@ export function HeroBanner({
 
   if (variant === "card") {
     return (
-      <section className="relative w-full overflow-hidden bg-stone">
+      <section className="relative w-full overflow-hidden bg-background">
         <div className="relative w-full overflow-hidden bg-muted">
           <img
             src={image}
             alt={headline}
-            className="h-[clamp(360px,62vw,640px)] w-full object-cover object-center"
+            className="h-[clamp(380px,65vw,680px)] w-full object-cover object-center"
             fetchPriority="high"
           />
         </div>
 
         <div className="mx-auto w-full max-w-[90rem] px-4 sm:px-6 lg:px-8 sm:pointer-events-none sm:absolute sm:inset-x-0 sm:bottom-10 z-10">
-          <div className="sm:pointer-events-auto max-w-[30rem] bg-background p-7 sm:p-9 shadow-sm sm:shadow-lg border border-border/50 flex flex-col gap-3.5 my-4 sm:my-0">
+          <div className="sm:pointer-events-auto max-w-[32rem] bg-white p-7 sm:p-10 shadow-[0_4px_24px_rgba(0,0,0,0.06)] border border-border flex flex-col gap-3.5 my-4 sm:my-0">
             {amharicEyebrow || eyebrow ? (
               <span
-                className="text-xs sm:text-[0.9rem] font-medium text-muted-foreground tracking-normal font-sans"
+                className="text-xs sm:text-[0.85rem] font-semibold text-muted-foreground uppercase tracking-widest font-sans"
                 lang="am"
               >
                 {amharicEyebrow || eyebrow}
               </span>
             ) : null}
-            <h1 className="text-[1.8rem] sm:text-3xl lg:text-[2.6rem] font-semibold tracking-tight text-foreground leading-[1.15] text-balance">
+            <h1 className="text-[1.85rem] sm:text-3xl lg:text-[2.5rem] font-semibold tracking-tight text-foreground leading-[1.15] text-balance">
               {headline}
             </h1>
             {sub ? (
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{sub}</p>
             ) : null}
             {(ctaLabel && ctaTo) || (secondaryCtaLabel && secondaryCtaTo) ? (
-              <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 {ctaLabel && ctaTo ? (
                   <Link
                     to={ctaTo}
-                    className="inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-sm font-semibold text-background transition-opacity hover:opacity-85"
+                    className="inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-85 shadow-sm"
                   >
                     {ctaLabel}
                   </Link>
@@ -75,7 +75,7 @@ export function HeroBanner({
                 {secondaryCtaLabel && secondaryCtaTo ? (
                   <Link
                     to={secondaryCtaTo}
-                    className="inline-flex items-center justify-center gap-2 border border-foreground bg-transparent px-6 py-3.5 text-sm font-semibold text-foreground transition-opacity hover:opacity-85"
+                    className="inline-flex items-center justify-center gap-2 border border-foreground bg-transparent px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground transition-opacity hover:opacity-85"
                   >
                     {secondaryCtaLabel}
                   </Link>
