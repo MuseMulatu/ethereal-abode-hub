@@ -290,42 +290,61 @@ export async function getProducts(filters?: {
 
 export async function getProduct(idOrSlug: string | number): Promise<BackendProduct | null> {
   if (BRIDGE_URL) {
+    let response: Response | null = null;
     try {
       const isNum = typeof idOrSlug === "number" || /^\d+$/.test(String(idOrSlug));
       const param = isNum ? `id=${idOrSlug}` : `slug=${idOrSlug}`;
-      const res = await fetch(`${BRIDGE_URL}?action=get_product&${param}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.product) return json.product;
-      }
+      response = await fetch(`${BRIDGE_URL}?action=get_product&${param}`);
     } catch (e) {
-      console.warn("API Bridge getProduct failed:", e);
+      console.warn("API Bridge getProduct failed, checking local store:", e);
+    }
+    if (response) {
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error(`Product lookup failed (HTTP ${response.status}).`);
+      const json = await response.json();
+      if (json.success && json.product && !json.product.is_archived) return json.product;
+      return null;
     }
   }
 
   const list = getLocalProducts();
-  return list.find((p) => String(p.id) === String(idOrSlug) || p.slug === String(idOrSlug)) || null;
+  return (
+    list.find(
+      (p) =>
+        !p.is_archived &&
+        (String(p.id) === String(idOrSlug) || p.slug === String(idOrSlug)),
+    ) || null
+  );
 }
 
 export async function createProduct(
   product: Omit<BackendProduct, "id" | "created_at" | "updated_at">,
+  auth?: { name?: string | undefined; role?: string | undefined },
 ): Promise<{ success: boolean; id?: number | string; slug?: string }> {
   if (BRIDGE_URL) {
+    let response: Response | null = null;
     try {
-      const res = await fetch(`${BRIDGE_URL}?action=create_product`, {
+      response = await fetch(`${BRIDGE_URL}?action=create_product`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${BRIDGE_KEY}`,
         },
-        body: JSON.stringify(product),
+        body: JSON.stringify({
+          ...product,
+          auth_user_name: auth?.name,
+          auth_user_role: auth?.role,
+        }),
       });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success) return json;
-      }
     } catch (e) {
       console.warn("API Bridge createProduct failed, saving to local store:", e);
+    }
+    if (response) {
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) {
+        throw new Error(json?.error || `Product creation failed (HTTP ${response.status}).`);
+      }
+      return json;
     }
   }
 
@@ -344,11 +363,12 @@ export async function createProduct(
 export async function updateProduct(
   id: number | string,
   fields: Partial<BackendProduct>,
-  auth?: { name?: string; role?: string },
+  auth?: { name?: string | undefined; role?: string | undefined },
 ): Promise<boolean> {
   if (BRIDGE_URL) {
+    let response: Response | null = null;
     try {
-      await fetch(`${BRIDGE_URL}?action=update_product`, {
+      response = await fetch(`${BRIDGE_URL}?action=update_product`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -363,6 +383,12 @@ export async function updateProduct(
       });
     } catch (e) {
       console.warn("API Bridge updateProduct failed, updating local store:", e);
+    }
+    if (response) {
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) {
+        throw new Error(json?.error || `Product update failed (HTTP ${response.status}).`);
+      }
     }
   }
 
@@ -379,11 +405,12 @@ export async function updateProduct(
 export async function deleteProduct(
   id: number | string,
   hardDelete = false,
-  auth?: { name?: string; role?: string },
+  auth?: { name?: string | undefined; role?: string | undefined },
 ): Promise<boolean> {
   if (BRIDGE_URL) {
+    let response: Response | null = null;
     try {
-      await fetch(`${BRIDGE_URL}?action=delete_product${hardDelete ? "&hard=1" : ""}`, {
+      response = await fetch(`${BRIDGE_URL}?action=delete_product${hardDelete ? "&hard=1" : ""}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -397,6 +424,12 @@ export async function deleteProduct(
       });
     } catch (e) {
       console.warn("API Bridge deleteProduct failed:", e);
+    }
+    if (response) {
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) {
+        throw new Error(json?.error || `Product archive failed (HTTP ${response.status}).`);
+      }
     }
   }
 

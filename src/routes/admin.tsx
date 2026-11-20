@@ -912,6 +912,7 @@ function AdminDashboard() {
 
   // Products Management State
   const [products, setProducts] = useState<BackendProduct[]>([]);
+  const [productFilter, setProductFilter] = useState<"active" | "archived">("active");
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProductId, setEditingProductId] = useState<number | string | null>(null);
   const [prodTitle, setProdTitle] = useState("");
@@ -935,6 +936,10 @@ function AdminDashboard() {
     "Belgian Linen, Bouclé Warm Ivory, Olive Textured Chenille, Addis Camel Leather",
   );
   const [productNotice, setProductNotice] = useState<string | null>(null);
+  const [productNoticeIsError, setProductNoticeIsError] = useState(false);
+  const visibleProducts = products.filter((item) =>
+    productFilter === "archived" ? item.is_archived : !item.is_archived,
+  );
 
   // Allowed tabs per role
   const allowedTabs = useMemo(() => {
@@ -956,7 +961,11 @@ function AdminDashboard() {
 
   const refreshProducts = () => {
     getProducts({ include_archived: true }).then((list) => {
-      if (list && list.length > 0) setProducts(list);
+      setProducts(list);
+    }).catch((error: unknown) => {
+      console.error("Could not refresh products:", error);
+      setProductNotice("Could not refresh products. Please reload and try again.");
+      setProductNoticeIsError(true);
     });
   };
 
@@ -1104,81 +1113,128 @@ function AdminDashboard() {
       ? `${prodCapacity || "Custom"} · ${prodDimensions}`
       : prodCapacity || "Made to Order";
 
-    if (editingProductId) {
-      await updateProduct(editingProductId, {
-        title: prodTitle,
-        amharic_name: prodAmharic || null,
-        category: prodCategory,
-        seating_capacity: prodCapacity || null,
-        dimensions: prodDimensions || null,
-        description: prodDescription || null,
-        detail: computedDetail,
-        price_display: prodPriceDisplay,
-        image_url: prodImageUrl,
-        gallery_images: prodGalleryImages.filter(Boolean).slice(0, 4),
-        color_options: prodColorOptions.filter((option) => option.name.trim() && option.color),
-        blueprint_image_url: prodBlueprintUrl || null,
-        is_featured: prodIsFeatured,
-        is_top_pick: prodIsTopPick,
-        wood_options: woods,
-        fabric_options: fabrics,
-        auth_user_name: currentUser?.username,
-        auth_user_role: currentUser?.role,
-      });
-      setProductNotice(`Updated "${prodTitle}" successfully!`);
-    } else {
-      await createProduct({
-        title: prodTitle,
-        slug: prodTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        amharic_name: prodAmharic || null,
-        category: prodCategory,
-        seating_capacity: prodCapacity || null,
-        dimensions: prodDimensions || null,
-        description: prodDescription || null,
-        detail: computedDetail,
-        price_display: prodPriceDisplay,
-        image_url: prodImageUrl,
-        gallery_images: prodGalleryImages.filter(Boolean).slice(0, 4),
-        color_options: prodColorOptions.filter((option) => option.name.trim() && option.color),
-        blueprint_image_url: prodBlueprintUrl || null,
-        is_featured: prodIsFeatured,
-        is_top_pick: prodIsTopPick,
-        wood_options: woods,
-        fabric_options: fabrics,
-        sort_order: products.length + 1,
-        auth_user_name: currentUser?.username,
-        auth_user_role: currentUser?.role,
-      });
-      setProductNotice(`Created "${prodTitle}" in catalog!`);
-    }
+    try {
+      if (editingProductId) {
+        await updateProduct(editingProductId, {
+          title: prodTitle,
+          amharic_name: prodAmharic || null,
+          category: prodCategory,
+          seating_capacity: prodCapacity || null,
+          dimensions: prodDimensions || null,
+          description: prodDescription || null,
+          detail: computedDetail,
+          price_display: prodPriceDisplay,
+          image_url: prodImageUrl,
+          gallery_images: prodGalleryImages.filter(Boolean).slice(0, 4),
+          color_options: prodColorOptions.filter((option) => option.name.trim() && option.color),
+          blueprint_image_url: prodBlueprintUrl || null,
+          is_featured: prodIsFeatured,
+          is_top_pick: prodIsTopPick,
+          wood_options: woods,
+          fabric_options: fabrics,
+        }, { name: currentUser?.username, role: currentUser?.role });
+        setProductNotice(`Updated "${prodTitle}" successfully!`);
+      } else {
+        await createProduct({
+          title: prodTitle,
+          slug: prodTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          amharic_name: prodAmharic || null,
+          category: prodCategory,
+          seating_capacity: prodCapacity || null,
+          dimensions: prodDimensions || null,
+          description: prodDescription || null,
+          detail: computedDetail,
+          price_display: prodPriceDisplay,
+          image_url: prodImageUrl,
+          gallery_images: prodGalleryImages.filter(Boolean).slice(0, 4),
+          color_options: prodColorOptions.filter((option) => option.name.trim() && option.color),
+          blueprint_image_url: prodBlueprintUrl || null,
+          is_featured: prodIsFeatured,
+          is_top_pick: prodIsTopPick,
+          wood_options: woods,
+          fabric_options: fabrics,
+          sort_order: products.length + 1,
+        }, { name: currentUser?.username, role: currentUser?.role });
+        setProductNotice(`Created "${prodTitle}" in catalog!`);
+      }
 
-    setShowProductModal(false);
-    refreshProducts();
-    setTimeout(() => setProductNotice(null), 4000);
+      setProductNoticeIsError(false);
+      setShowProductModal(false);
+      refreshProducts();
+      setTimeout(() => setProductNotice(null), 4000);
+    } catch (error) {
+      console.error("Could not save product:", error);
+      setProductNotice(error instanceof Error ? error.message : "Could not save product.");
+      setProductNoticeIsError(true);
+    }
   };
 
   const handleDeleteProduct = async (id: number | string) => {
     if (!confirm("Are you sure you want to remove this product from the catalog?")) return;
-    await deleteProduct(id, false, currentUser?.username, currentUser?.role);
-    refreshProducts();
+    try {
+      await deleteProduct(id, false, {
+        name: currentUser?.username,
+        role: currentUser?.role,
+      });
+      setProductNotice("Product archived. It can be restored from the Archived products view.");
+      setProductNoticeIsError(false);
+      refreshProducts();
+    } catch (error) {
+      console.error("Could not archive product:", error);
+      setProductNotice(error instanceof Error ? error.message : "Could not archive product.");
+      setProductNoticeIsError(true);
+    }
   };
 
   const handleToggleTopPick = async (id: number | string, current: boolean) => {
-    await updateProduct(id, {
-      is_top_pick: !current,
-      auth_user_name: currentUser?.username,
-      auth_user_role: currentUser?.role,
-    });
-    refreshProducts();
+    try {
+      await updateProduct(
+        id,
+        { is_top_pick: !current },
+        { name: currentUser?.username, role: currentUser?.role },
+      );
+      setProductNotice(`Top Pick ${current ? "removed" : "enabled"}.`);
+      setProductNoticeIsError(false);
+      refreshProducts();
+    } catch (error) {
+      console.error("Could not update Top Pick:", error);
+      setProductNotice(error instanceof Error ? error.message : "Could not update Top Pick.");
+      setProductNoticeIsError(true);
+    }
   };
 
   const handleToggleFeatured = async (id: number | string, current: boolean) => {
-    await updateProduct(id, {
-      is_featured: !current,
-      auth_user_name: currentUser?.username,
-      auth_user_role: currentUser?.role,
-    });
-    refreshProducts();
+    try {
+      await updateProduct(
+        id,
+        { is_featured: !current },
+        { name: currentUser?.username, role: currentUser?.role },
+      );
+      setProductNotice(`Featured ${current ? "removed" : "enabled"}.`);
+      setProductNoticeIsError(false);
+      refreshProducts();
+    } catch (error) {
+      console.error("Could not update Featured status:", error);
+      setProductNotice(error instanceof Error ? error.message : "Could not update Featured status.");
+      setProductNoticeIsError(true);
+    }
+  };
+
+  const handleRestoreProduct = async (id: number | string) => {
+    try {
+      await updateProduct(
+        id,
+        { is_archived: false },
+        { name: currentUser?.username, role: currentUser?.role },
+      );
+      setProductNotice("Product restored to the public catalog.");
+      setProductNoticeIsError(false);
+      refreshProducts();
+    } catch (error) {
+      console.error("Could not restore product:", error);
+      setProductNotice(error instanceof Error ? error.message : "Could not restore product.");
+      setProductNoticeIsError(true);
+    }
   };
 
   // Blog / Journal Full CRUD Handlers
@@ -2347,14 +2403,57 @@ function AdminDashboard() {
             </div>
 
             {productNotice && (
-              <div className="rounded border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-semibold text-emerald-800 flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
+              <div
+                role={productNoticeIsError ? "alert" : "status"}
+                className={`flex items-center gap-2 rounded border p-4 text-sm font-semibold ${
+                  productNoticeIsError
+                    ? "border-destructive/30 bg-destructive/10 text-destructive"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-800"
+                }`}
+              >
+                {productNoticeIsError ? (
+                  <AlertCircle className="h-4 w-4" />
+                ) : (
+                  <CheckCircle className="h-4 w-4" />
+                )}
                 {productNotice}
               </div>
             )}
 
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setProductFilter("active")}
+                aria-pressed={productFilter === "active"}
+                className={`rounded border px-3 py-2 text-xs font-semibold ${
+                  productFilter === "active"
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border hover:bg-stone"
+                }`}
+              >
+                Active products ({products.filter((item) => !item.is_archived).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setProductFilter("archived")}
+                aria-pressed={productFilter === "archived"}
+                className={`rounded border px-3 py-2 text-xs font-semibold ${
+                  productFilter === "archived"
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border hover:bg-stone"
+                }`}
+              >
+                Archived ({products.filter((item) => item.is_archived).length})
+              </button>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((item) => (
+              {visibleProducts.length === 0 ? (
+                <p className="col-span-full py-10 text-center text-sm text-muted-foreground">
+                  No {productFilter} products.
+                </p>
+              ) : (
+                visibleProducts.map((item) => (
                 <div
                   key={item.id}
                   className={`rounded-lg border bg-background overflow-hidden p-4 flex flex-col justify-between transition-shadow hover:shadow-md ${
@@ -2396,31 +2495,35 @@ function AdminDashboard() {
                   {/* Badges & Actions */}
                   <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleTopPick(item.id, item.is_top_pick)}
-                        title="Show in Homepage Sofa Carousel"
-                        className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
-                          item.is_top_pick
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-stone/50 text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {item.is_top_pick ? "★ Top Pick" : "+ Top Pick"}
-                      </button>
+                      {!item.is_archived && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleTopPick(item.id, item.is_top_pick)}
+                            title="Show in Homepage Sofa Carousel"
+                            className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
+                              item.is_top_pick
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-stone/50 text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {item.is_top_pick ? "★ Top Pick" : "+ Top Pick"}
+                          </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleToggleFeatured(item.id, item.is_featured)}
-                        title="Show in Featured Grid"
-                        className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
-                          item.is_featured
-                            ? "bg-purple-100 text-purple-800"
-                            : "bg-stone/50 text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {item.is_featured ? "Featured" : "+ Feature"}
-                      </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleFeatured(item.id, item.is_featured)}
+                            title="Show in Featured Grid"
+                            className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
+                              item.is_featured
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-stone/50 text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {item.is_featured ? "Featured" : "+ Feature"}
+                          </button>
+                        </>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -2432,18 +2535,30 @@ function AdminDashboard() {
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteProduct(item.id)}
-                        className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                        title="Delete / Archive Product"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {item.is_archived ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRestoreProduct(item.id)}
+                          className="rounded border border-emerald-700/30 px-2 py-1 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-50"
+                          title="Restore product to public catalog"
+                        >
+                          Restore
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProduct(item.id)}
+                          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                          title="Archive Product"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* Product Edit / Add Modal */}
@@ -2460,6 +2575,15 @@ function AdminDashboard() {
                     </h3>
 
                     <form onSubmit={handleSaveProduct} className="space-y-4">
+                      {productNotice && productNoticeIsError && (
+                        <div
+                          role="alert"
+                          className="flex items-center gap-2 rounded border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+                        >
+                          <AlertCircle className="h-4 w-4 shrink-0" />
+                          {productNotice}
+                        </div>
+                      )}
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                           Product Title *

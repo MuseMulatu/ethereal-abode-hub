@@ -599,10 +599,10 @@ switch ($action) {
         $slug = $_GET['slug'] ?? null;
 
         if ($id) {
-            $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ? AND is_archived = 0");
             $stmt->execute([$id]);
         } elseif ($slug) {
-            $stmt = $pdo->prepare("SELECT * FROM products WHERE slug = ?");
+            $stmt = $pdo->prepare("SELECT * FROM products WHERE slug = ? AND is_archived = 0");
             $stmt->execute([$slug]);
         } else {
             http_response_code(400);
@@ -698,7 +698,7 @@ switch ($action) {
         ];
 
         foreach ($allowedFields as $f) {
-            if (isset($input[$f])) {
+            if (array_key_exists($f, $input)) {
                 $fields[] = "`$f` = ?";
                 $params[] = $input[$f];
             }
@@ -740,8 +740,18 @@ switch ($action) {
         $params[] = $idOrSlug;
         $params[] = $idOrSlug;
         $sql = "UPDATE products SET " . implode(", ", $fields) . ", updated_at = NOW() WHERE id = ? OR slug = ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+        } catch (Throwable $e) {
+            error_log("update_product failed for ID $idOrSlug: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Product update failed. Check the API server error log for details.',
+            ]);
+            exit;
+        }
 
         $adminName = $input['auth_user_name'] ?? 'Staff';
         $adminRole = $input['auth_user_role'] ?? 'STORE_MANAGER';

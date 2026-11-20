@@ -9,7 +9,7 @@ import {
   softProducts,
   type Product,
 } from "@/data/site";
-import { getProduct } from "@/lib/cms-store";
+import { getProduct, getProducts } from "@/lib/cms-store";
 
 export const Route = createFileRoute("/product/$productId")({
   head: () => ({
@@ -34,7 +34,7 @@ function ProductRoute() {
     setLoading(true);
     setProduct(null);
     getProduct(productId)
-      .then((savedProduct) => {
+      .then(async (savedProduct) => {
         if (!active) return;
         if (savedProduct) {
           setProduct({
@@ -58,6 +58,18 @@ function ProductRoute() {
             category: savedProduct.category,
             ...(savedProduct.amharic_name ? { amharicName: savedProduct.amharic_name } : {}),
           });
+          return;
+        }
+
+        const allProducts = await getProducts({ include_archived: true });
+        if (!active) return;
+        const archivedProduct = allProducts.find(
+          (item) =>
+            item.is_archived &&
+            (String(item.id) === productId || item.slug === productId),
+        );
+        if (archivedProduct) {
+          setProduct(null);
           return;
         }
 
