@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS `products` (
   `price_etb` DECIMAL(12,2) DEFAULT NULL,
   `image_url` VARCHAR(500) NOT NULL,
   `gallery_images` JSON DEFAULT NULL,
+  `color_options` JSON DEFAULT NULL,
+  `blueprint_image_url` VARCHAR(500) DEFAULT NULL,
   `wood_options` JSON DEFAULT NULL,
   `fabric_options` JSON DEFAULT NULL,
   `span` ENUM('normal', 'wide', 'tall') DEFAULT 'normal',
@@ -68,6 +70,7 @@ CREATE TABLE IF NOT EXISTS `inquiry_items` (
   `product_name` VARCHAR(191) NOT NULL,
   `selected_wood` VARCHAR(100) DEFAULT NULL,
   `selected_fabric` VARCHAR(100) DEFAULT NULL,
+  `selected_color` VARCHAR(100) DEFAULT NULL,
   `quantity` INT NOT NULL DEFAULT 1,
   FOREIGN KEY (`inquiry_id`) REFERENCES `inquiries`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 export const navLinks: { to: string; search?: Record<string, string>; label: string }[] = [
   { to: "/", label: "Home" },
-  { to: "/shop", search: { category: "all" }, label: "Catalog" },
+  { to: "/shop", search: { category: "all" }, label: "Products" },
   { to: "/shop", search: { category: "sofas" }, label: "Sofas & Chairs" },
   { to: "/shop", search: { category: "dining" }, label: "Dining" },
   { to: "/shop", search: { category: "living-kids" }, label: "Living & Bed" },
@@ -60,13 +60,14 @@ export function Navbar() {
         )}
       >
         <div className="mx-auto flex h-full max-w-[120rem] items-center justify-between px-6 sm:px-10 lg:px-16">
+
           <Link to="/" className="z-50 flex items-center">
             <img
               src={anteLogo}
               alt="Anteniguss Home Logo"
               className={cn(
                 "w-auto object-contain transition-all duration-500 ease-cinematic",
-                scrolled ? "h-[45px] sm:h-[65px]" : "h-[55px] sm:h-[78px]",
+                scrolled ? "h-[52px] sm:h-[72px]" : "h-[64px] sm:h-[90px]",
               )}
             />
           </Link>
@@ -158,7 +159,7 @@ export function Navbar() {
               className="mt-6 inline-flex items-center justify-center gap-2 border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-85"
             >
               <ShoppingBag className="h-4 w-4" />
-              Browse Catalog & Customize
+              Browse Products & Customize
             </Link>
           </nav>
         </div>

@@ -1,8 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Filter, MessageCircle, Ruler, Search, ShoppingBag, Sparkles, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { ProductCustomizerModal } from "@/components/site/ProductCustomizerModal";
 import { QuoteBagDrawer } from "@/components/site/QuoteBagDrawer";
 import { Reveal } from "@/components/site/Reveal";
 import {
@@ -16,7 +15,7 @@ import { getProducts, type BackendProduct } from "@/lib/cms-store";
 
 export const Route = createFileRoute("/shop")({
   validateSearch: (search: Record<string, unknown>) => ({
-    category: (search.category as string) || "all",
+    category: (search["category"] as string) || "all",
   }),
   head: () => ({
     meta: [
@@ -70,6 +69,7 @@ const ALL_CATALOG_PRODUCTS: (Product & {
 ];
 
 function ShopPage() {
+  const navigate = useNavigate();
   const { category: initialCategory } = Route.useSearch();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory || "all");
@@ -83,9 +83,6 @@ function ShopPage() {
     }
   }, [initialCategory]);
 
-  // Drawer & modal state
-  const [customizerProduct, setCustomizerProduct] = useState<Product | null>(null);
-  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [isBagOpen, setIsBagOpen] = useState(false);
 
   useEffect(() => {
@@ -103,27 +100,30 @@ function ShopPage() {
 
   const allItems = useMemo(() => {
     let source: (Product & {
-      categoryType?: string;
-      rating?: number;
-      reviewCount?: number;
+      categoryType: string;
+      rating: number;
+      reviewCount: number;
     })[] = [];
 
     if (backendItems.length > 0) {
       source = backendItems.map((bp, idx) => ({
         id: String(bp.id),
         title: bp.title,
-        amharicName: bp.amharic_name || undefined,
+        ...(bp.amharic_name ? { amharicName: bp.amharic_name } : {}),
         category: bp.category,
         categoryType: bp.category,
-        seatingCapacity: bp.seating_capacity || undefined,
-        dimensions: bp.dimensions || undefined,
-        description: bp.description || undefined,
+        ...(bp.seating_capacity ? { seatingCapacity: bp.seating_capacity } : {}),
+        ...(bp.dimensions ? { dimensions: bp.dimensions } : {}),
+        ...(bp.description ? { description: bp.description } : {}),
         detail: bp.detail || `${bp.seating_capacity || ""} · ${bp.dimensions || ""}`,
         price: bp.price_display,
         image: bp.image_url,
-        wood_options: bp.wood_options,
-        fabric_options: bp.fabric_options,
-        span: bp.span || "normal",
+        ...(bp.gallery_images ? { gallery_images: bp.gallery_images } : {}),
+        ...(bp.color_options ? { color_options: bp.color_options } : {}),
+        ...(bp.blueprint_image_url ? { blueprint_image_url: bp.blueprint_image_url } : {}),
+        ...(bp.wood_options ? { wood_options: bp.wood_options } : {}),
+        ...(bp.fabric_options ? { fabric_options: bp.fabric_options } : {}),
+        ...(bp.span === "wide" || bp.span === "tall" ? { span: bp.span } : {}),
         rating: 4.8 + (idx % 3) * 0.1,
         reviewCount: 14 + ((idx * 5) % 30),
       }));
@@ -133,7 +133,7 @@ function ShopPage() {
 
     // Deduplicate by normalized title so older duplicate seed rows are eliminated,
     // retaining the latest (higher ID or latest edited) version!
-    const seen = new Map<string, typeof source[0]>();
+    const seen = new Map<string, (typeof source)[0]>();
     for (const item of source) {
       const key = item.title.trim().toLowerCase();
       const existing = seen.get(key);
@@ -186,7 +186,8 @@ function ShopPage() {
             itemCat === target ||
             (target === "sofas" && (itemCat.includes("sofa") || itemCat.includes("soft"))) ||
             (target === "dining" && (itemCat.includes("dining") || itemCat.includes("kitchen"))) ||
-            (target === "armchairs" && (itemCat.includes("armchair") || itemCat.includes("chair"))) ||
+            (target === "armchairs" &&
+              (itemCat.includes("armchair") || itemCat.includes("chair"))) ||
             (target === "living-kids" &&
               (itemCat.includes("bed") || itemCat.includes("living") || itemCat.includes("kid")));
           if (!match) return false;
@@ -224,8 +225,7 @@ function ShopPage() {
   }, [allItems, searchQuery, selectedCategory, selectedCapacity, sortBy]);
 
   const handleOpenCustomizer = (product: Product) => {
-    setCustomizerProduct(product);
-    setIsCustomizerOpen(true);
+    navigate({ to: "/product/$productId", params: { productId: String(product.id) } });
   };
 
   return (
@@ -404,12 +404,14 @@ function ShopPage() {
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredProducts.map((item, index) => (
               <Reveal key={item.id} delay={(index % 4) * 60}>
-                <div
-                  onClick={() => handleOpenCustomizer(item)}
-                  className="group flex flex-col justify-between rounded-sm border border-border bg-white overflow-hidden cursor-pointer transition-all duration-300 hover:border-foreground/30 hover:shadow-lg"
-                >
+                <article className="group flex flex-col justify-between overflow-hidden rounded-sm border border-border bg-white transition-all duration-300 hover:border-foreground/30 hover:shadow-lg">
                   {/* Image container */}
-                  <div className="relative aspect-[4/3] overflow-hidden bg-stone">
+                  <Link
+                    to="/product/$productId"
+                    params={{ productId: String(item.id) }}
+                    className="relative block aspect-[4/3] overflow-hidden bg-stone"
+                    aria-label={`View ${item.title}`}
+                  >
                     <img
                       src={item.image}
                       alt={item.title}
@@ -428,7 +430,7 @@ function ShopPage() {
                     <span className="absolute bottom-3 right-3 rounded bg-ink/85 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-white pointer-events-none">
                       {item.price || "Made to Order"}
                     </span>
-                  </div>
+                  </Link>
 
                   {/* Body */}
                   <div className="flex flex-1 flex-col justify-between p-5">
@@ -447,9 +449,13 @@ function ShopPage() {
                       </div>
 
                       {/* Title & amharic */}
-                      <h3 className="display mt-2.5 text-xl hover:underline text-foreground">
+                      <Link
+                        to="/product/$productId"
+                        params={{ productId: String(item.id) }}
+                        className="display mt-2.5 inline-block text-xl text-foreground hover:underline"
+                      >
                         {item.title}
-                      </h3>
+                      </Link>
 
                       {item.amharicName && (
                         <p className="font-amharic text-xs text-muted-foreground mt-0.5" lang="am">
@@ -474,7 +480,7 @@ function ShopPage() {
                         className="flex-1 inline-flex items-center justify-center gap-1.5 rounded border border-foreground bg-foreground py-2.5 px-3 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-90"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
-                        <span>Customize & Quote</span>
+                        <span>View Details & Customize</span>
                       </button>
 
                       <a
@@ -491,7 +497,7 @@ function ShopPage() {
                       </a>
                     </div>
                   </div>
-                </div>
+                </article>
               </Reveal>
             ))}
           </div>
@@ -533,14 +539,6 @@ function ShopPage() {
           </Reveal>
         </div>
       </section>
-
-      {/* Modals */}
-      <ProductCustomizerModal
-        product={customizerProduct}
-        isOpen={isCustomizerOpen}
-        onClose={() => setIsCustomizerOpen(false)}
-        onOpenBag={() => setIsBagOpen(true)}
-      />
 
       <QuoteBagDrawer isOpen={isBagOpen} onClose={() => setIsBagOpen(false)} />
     </>

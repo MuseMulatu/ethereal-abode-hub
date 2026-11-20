@@ -40,7 +40,12 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { brand, catalogueSofas } from "@/data/site";
+import {
+  brand,
+  catalogueSofas,
+  DEFAULT_PRODUCT_COLORS,
+  type ProductColorOption,
+} from "@/data/site";
 import {
   changeUserPassword,
   createBlogPost,
@@ -917,6 +922,10 @@ function AdminDashboard() {
   const [prodDescription, setProdDescription] = useState("");
   const [prodPriceDisplay, setProdPriceDisplay] = useState("Ask for price");
   const [prodImageUrl, setProdImageUrl] = useState("/curved-boucle-sofa.jpg");
+  const [prodGalleryImages, setProdGalleryImages] = useState<string[]>([]);
+  const [prodBlueprintUrl, setProdBlueprintUrl] = useState("");
+  const [prodColorOptions, setProdColorOptions] =
+    useState<ProductColorOption[]>(DEFAULT_PRODUCT_COLORS);
   const [prodIsFeatured, setProdIsFeatured] = useState(false);
   const [prodIsTopPick, setProdIsTopPick] = useState(false);
   const [prodWoodOptions, setProdWoodOptions] = useState(
@@ -1035,6 +1044,9 @@ function AdminDashboard() {
     setProdDescription("");
     setProdPriceDisplay("Ask for price");
     setProdImageUrl("/curved-boucle-sofa.jpg");
+    setProdGalleryImages([]);
+    setProdBlueprintUrl("");
+    setProdColorOptions(DEFAULT_PRODUCT_COLORS.map((option) => ({ ...option })));
     setProdIsFeatured(false);
     setProdIsTopPick(false);
     setProdWoodOptions("Solid Ethiopian Wanza, Stained Ash, Natural Teak, Dark Walnut");
@@ -1054,6 +1066,13 @@ function AdminDashboard() {
     setProdDescription(p.description || "");
     setProdPriceDisplay(p.price_display);
     setProdImageUrl(p.image_url);
+    setProdGalleryImages(Array.isArray(p.gallery_images) ? p.gallery_images.slice(0, 4) : []);
+    setProdBlueprintUrl(p.blueprint_image_url || "");
+    setProdColorOptions(
+      Array.isArray(p.color_options) && p.color_options.length > 0
+        ? p.color_options
+        : DEFAULT_PRODUCT_COLORS.map((option) => ({ ...option })),
+    );
     setProdIsFeatured(p.is_featured);
     setProdIsTopPick(p.is_top_pick);
     setProdWoodOptions(
@@ -1096,6 +1115,9 @@ function AdminDashboard() {
         detail: computedDetail,
         price_display: prodPriceDisplay,
         image_url: prodImageUrl,
+        gallery_images: prodGalleryImages.filter(Boolean).slice(0, 4),
+        color_options: prodColorOptions.filter((option) => option.name.trim() && option.color),
+        blueprint_image_url: prodBlueprintUrl || null,
         is_featured: prodIsFeatured,
         is_top_pick: prodIsTopPick,
         wood_options: woods,
@@ -1116,6 +1138,9 @@ function AdminDashboard() {
         detail: computedDetail,
         price_display: prodPriceDisplay,
         image_url: prodImageUrl,
+        gallery_images: prodGalleryImages.filter(Boolean).slice(0, 4),
+        color_options: prodColorOptions.filter((option) => option.name.trim() && option.color),
+        blueprint_image_url: prodBlueprintUrl || null,
         is_featured: prodIsFeatured,
         is_top_pick: prodIsTopPick,
         wood_options: woods,
@@ -1582,9 +1607,15 @@ function AdminDashboard() {
                               {item.product_name}
                             </span>
                             <span className="text-muted-foreground"> (x{item.quantity})</span>
-                            {(item.selected_fabric || item.selected_wood) && (
+                            {(
+                              item.selected_color ||
+                              item.selected_fabric ||
+                              item.selected_wood
+                            ) && (
                               <p className="text-[11px] text-muted-foreground mt-0.5">
-                                {item.selected_fabric} · {item.selected_wood}
+                                {[item.selected_color, item.selected_fabric, item.selected_wood]
+                                  .filter(Boolean)
+                                  .join(" · ")}
                               </p>
                             )}
                           </div>
@@ -2423,7 +2454,7 @@ function AdminDashboard() {
                   onClick={() => setShowProductModal(false)}
                 />
                 <div className="flex min-h-screen items-center justify-center p-4">
-                  <div className="relative w-full max-w-2xl rounded-lg bg-background p-6 shadow-2xl border border-border">
+                  <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-background p-6 shadow-2xl border border-border">
                     <h3 className="display text-2xl mb-4">
                       {editingProductId ? "Edit Product" : "Add New Product"}
                     </h3>
@@ -2562,6 +2593,156 @@ function AdminDashboard() {
                         value={prodImageUrl}
                         onChange={(url) => setProdImageUrl(url)}
                         placeholder="/curved-boucle-sofa.jpg or image URL"
+                      />
+
+                      <div className="space-y-3 rounded border border-border p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider">
+                              Product Gallery
+                            </p>
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              Add up to four additional photos (five images total).
+                            </p>
+                          </div>
+                          {prodGalleryImages.length < 4 && (
+                            <button
+                              type="button"
+                              onClick={() => setProdGalleryImages((images) => [...images, ""])}
+                              className="inline-flex items-center gap-1 border border-border px-2.5 py-1.5 text-xs hover:bg-stone"
+                            >
+                              <Plus className="h-3 w-3" /> Add image
+                            </button>
+                          )}
+                        </div>
+                        {prodGalleryImages.map((url, index) => (
+                          <div key={`gallery-${index}`} className="flex items-start gap-2">
+                            <div className="min-w-0 flex-1">
+                              <ImageUploadField
+                                label={`Additional photo ${index + 2}`}
+                                value={url}
+                                onChange={(nextUrl) =>
+                                  setProdGalleryImages((images) =>
+                                    images.map((image, imageIndex) =>
+                                      imageIndex === index ? nextUrl : image,
+                                    ),
+                                  )
+                                }
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setProdGalleryImages((images) =>
+                                  images.filter((_, imageIndex) => imageIndex !== index),
+                                )
+                              }
+                              aria-label={`Remove additional photo ${index + 2}`}
+                              className="mt-6 p-2 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="space-y-3 rounded border border-border p-3">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wider">
+                            Available Colors
+                          </p>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Default colors can be renamed, recolored, removed, or mapped to a
+                            dedicated product photo.
+                          </p>
+                        </div>
+                        {prodColorOptions.map((option, index) => (
+                          <div
+                            key={`color-${index}`}
+                            className="grid gap-2 border-t border-border pt-3 sm:grid-cols-[minmax(8rem,1fr)_5rem_auto] sm:items-end"
+                          >
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Swatch name
+                              <input
+                                required
+                                value={option.name}
+                                onChange={(event) =>
+                                  setProdColorOptions((options) =>
+                                    options.map((color, colorIndex) =>
+                                      colorIndex === index
+                                        ? { ...color, name: event.target.value }
+                                        : color,
+                                    ),
+                                  )
+                                }
+                                className="mt-1 w-full rounded border border-input bg-background p-2 text-sm font-normal normal-case tracking-normal text-foreground"
+                              />
+                            </label>
+                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Color
+                              <input
+                                type="color"
+                                value={option.color}
+                                onChange={(event) =>
+                                  setProdColorOptions((options) =>
+                                    options.map((color, colorIndex) =>
+                                      colorIndex === index
+                                        ? { ...color, color: event.target.value }
+                                        : color,
+                                    ),
+                                  )
+                                }
+                                className="mt-1 h-9 w-full cursor-pointer border border-input bg-background p-1"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              disabled={prodColorOptions.length <= 1}
+                              onClick={() =>
+                                setProdColorOptions((options) =>
+                                  options.filter((_, colorIndex) => colorIndex !== index),
+                                )
+                              }
+                              aria-label={`Remove ${option.name} color`}
+                              className="justify-self-end p-2 text-muted-foreground hover:text-destructive disabled:opacity-40"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                            <div className="sm:col-span-3">
+                              <ImageUploadField
+                                label={`Photo for ${option.name} (optional)`}
+                                value={option.image_url || ""}
+                                onChange={(image_url) =>
+                                  setProdColorOptions((options) =>
+                                    options.map((color, colorIndex) =>
+                                      colorIndex === index ? { ...color, image_url } : color,
+                                    ),
+                                  )
+                                }
+                                placeholder="Use color treatment on gallery if no photo is assigned"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProdColorOptions((options) => [
+                              ...options,
+                              { name: `Color ${options.length + 1}`, color: "#888888" },
+                            ])
+                          }
+                          className="inline-flex items-center gap-1 border border-border px-2.5 py-1.5 text-xs hover:bg-stone"
+                        >
+                          <Plus className="h-3 w-3" /> Add color
+                        </button>
+                      </div>
+
+                      <ImageUploadField
+                        label="Dimensions Blueprint (optional)"
+                        value={prodBlueprintUrl}
+                        onChange={setProdBlueprintUrl}
+                        placeholder="Upload a blueprint or enter its image URL"
                       />
 
                       <div className="flex items-center gap-6 pt-2">

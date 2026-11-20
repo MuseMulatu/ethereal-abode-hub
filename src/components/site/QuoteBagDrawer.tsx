@@ -64,8 +64,10 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
           product_name: i.customNotes
             ? `${i.productName} (Custom: ${i.customNotes})`
             : i.productName,
+          product_id: i.productId,
           selected_wood: i.selectedWood,
           selected_fabric: i.selectedFabric,
+          ...(i.selectedColor ? { selected_color: i.selectedColor } : {}),
           quantity: i.quantity,
         })),
       });
@@ -85,7 +87,7 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
     const itemsText = items
       .map(
         (i, idx) =>
-          `${idx + 1}. *${i.productName}* (${i.selectedFabric}, ${i.selectedWood}) x${i.quantity}${
+          `${idx + 1}. *${i.productName}* (${[i.selectedColor, i.selectedFabric, i.selectedWood].filter(Boolean).join(", ")}) x${i.quantity}${
             i.customNotes ? `\n   Custom: ${i.customNotes}` : ""
           }`,
       )
@@ -178,7 +180,7 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
                   type="button"
                   onClick={() => {
                     onClose();
-                    navigate({ to: "/shop" });
+                    navigate({ to: "/shop", search: { category: "all" } });
                   }}
                   className="mt-8 inline-flex items-center justify-center border border-foreground bg-foreground px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-background hover:opacity-90 cursor-pointer transition-opacity"
                 >
@@ -205,7 +207,9 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
                           {item.productName}
                         </h4>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {item.selectedFabric} · {item.selectedWood}
+                          {[item.selectedColor, item.selectedFabric, item.selectedWood]
+                            .filter(Boolean)
+                            .join(" · ")}
                         </p>
                         {item.dimensions && (
                           <p className="text-[11px] text-muted-foreground truncate">
@@ -214,7 +218,9 @@ export function QuoteBagDrawer({ isOpen, onClose }: QuoteBagDrawerProps) {
                         )}
                         {item.customNotes && (
                           <p className="mt-1 rounded bg-stone/80 border border-border/60 px-2 py-0.5 text-[11px] text-foreground font-mono">
-                            <span className="font-semibold text-muted-foreground not-mono">Note: </span>
+                            <span className="font-semibold text-muted-foreground not-mono">
+                              Note:{" "}
+                            </span>
                             {item.customNotes}
                           </p>
                         )}

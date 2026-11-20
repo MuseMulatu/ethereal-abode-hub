@@ -19,6 +19,7 @@ import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SoftFurnishingsRouteImport } from './routes/soft-furnishings'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as ProductProductIdRouteImport } from './routes/product.$productId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductProductIdRoute = ProductProductIdRouteImport.update({
+  id: '/product/$productId',
+  path: '/product/$productId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/shop': typeof ShopRoute
   '/soft-furnishings': typeof SoftFurnishingsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/product/$productId': typeof ProductProductIdRoute
   '/blog/': typeof BlogIndexRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/shop': typeof ShopRoute
   '/soft-furnishings': typeof SoftFurnishingsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/product/$productId': typeof ProductProductIdRoute
   '/blog': typeof BlogIndexRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/shop': typeof ShopRoute
   '/soft-furnishings': typeof SoftFurnishingsRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/product/$productId': typeof ProductProductIdRoute
   '/blog/': typeof BlogIndexRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/soft-furnishings'
     | '/blog/$slug'
+    | '/product/$productId'
     | '/blog/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/soft-furnishings'
     | '/blog/$slug'
+    | '/product/$productId'
     | '/blog'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/soft-furnishings'
     | '/blog/$slug'
+    | '/product/$productId'
     | '/blog/'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   ShopRoute: typeof ShopRoute
   SoftFurnishingsRoute: typeof SoftFurnishingsRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  ProductProductIdRoute: typeof ProductProductIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
 }
 
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/$productId': {
+      id: '/product/$productId'
+      path: '/product/$productId'
+      fullPath: '/product/$productId'
+      preLoaderRoute: typeof ProductProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -245,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShopRoute: ShopRoute,
   SoftFurnishingsRoute: SoftFurnishingsRoute,
   BlogSlugRoute: BlogSlugRoute,
+  ProductProductIdRoute: ProductProductIdRoute,
   BlogIndexRoute: BlogIndexRoute,
 }
 export const routeTree = rootRouteImport

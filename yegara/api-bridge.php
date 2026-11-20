@@ -583,6 +583,7 @@ switch ($action) {
         // Decode JSON columns
         foreach ($products as &$p) {
             $p['gallery_images'] = $p['gallery_images'] ? json_decode($p['gallery_images'], true) : [];
+            $p['color_options'] = $p['color_options'] ? json_decode($p['color_options'], true) : [];
             $p['wood_options'] = $p['wood_options'] ? json_decode($p['wood_options'], true) : [];
             $p['fabric_options'] = $p['fabric_options'] ? json_decode($p['fabric_options'], true) : [];
             $p['is_featured'] = (bool)$p['is_featured'];
@@ -612,6 +613,7 @@ switch ($action) {
         $p = $stmt->fetch();
         if ($p) {
             $p['gallery_images'] = $p['gallery_images'] ? json_decode($p['gallery_images'], true) : [];
+            $p['color_options'] = $p['color_options'] ? json_decode($p['color_options'], true) : [];
             $p['wood_options'] = $p['wood_options'] ? json_decode($p['wood_options'], true) : [];
             $p['fabric_options'] = $p['fabric_options'] ? json_decode($p['fabric_options'], true) : [];
             $p['is_featured'] = (bool)$p['is_featured'];
@@ -639,8 +641,9 @@ switch ($action) {
             INSERT INTO products (
                 slug, title, amharic_name, category, seating_capacity, dimensions,
                 description, detail, price_display, price_etb, image_url, gallery_images,
-                wood_options, fabric_options, span, is_featured, is_top_pick, sort_order, is_archived, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())
+                color_options, blueprint_image_url, wood_options, fabric_options, span,
+                is_featured, is_top_pick, sort_order, is_archived, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())
         ");
         $stmt->execute([
             $slug,
@@ -654,7 +657,9 @@ switch ($action) {
             $input['price_display'] ?? 'Ask for price',
             $input['price_etb'] ?? null,
             $input['image_url'],
-            isset($input['gallery_images']) ? json_encode($input['gallery_images']) : null,
+            isset($input['gallery_images']) ? json_encode(array_slice($input['gallery_images'], 0, 4)) : null,
+            isset($input['color_options']) ? json_encode($input['color_options']) : null,
+            $input['blueprint_image_url'] ?? null,
             isset($input['wood_options']) ? json_encode($input['wood_options']) : null,
             isset($input['fabric_options']) ? json_encode($input['fabric_options']) : null,
             $input['span'] ?? 'normal',
@@ -706,7 +711,15 @@ switch ($action) {
 
         if (isset($input['gallery_images'])) {
             $fields[] = "`gallery_images` = ?";
-            $params[] = json_encode($input['gallery_images']);
+            $params[] = json_encode(array_slice($input['gallery_images'], 0, 4));
+        }
+        if (isset($input['color_options'])) {
+            $fields[] = "`color_options` = ?";
+            $params[] = json_encode($input['color_options']);
+        }
+        if (array_key_exists('blueprint_image_url', $input)) {
+            $fields[] = "`blueprint_image_url` = ?";
+            $params[] = $input['blueprint_image_url'];
         }
         if (isset($input['wood_options'])) {
             $fields[] = "`wood_options` = ?";
@@ -965,8 +978,8 @@ switch ($action) {
         // Attach inquiry items
         if (!empty($input['items']) && is_array($input['items'])) {
             $itemStmt = $pdo->prepare("
-                INSERT INTO inquiry_items (inquiry_id, product_id, product_name, selected_wood, selected_fabric, quantity)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO inquiry_items (inquiry_id, product_id, product_name, selected_wood, selected_fabric, selected_color, quantity)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             ");
             foreach ($input['items'] as $item) {
                 $itemStmt->execute([
@@ -975,6 +988,7 @@ switch ($action) {
                     $item['product_name'] ?? 'Bespoke Custom Furniture',
                     $item['selected_wood'] ?? null,
                     $item['selected_fabric'] ?? null,
+                    $item['selected_color'] ?? null,
                     (int)($item['quantity'] ?? 1),
                 ]);
             }

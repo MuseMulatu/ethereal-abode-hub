@@ -103,7 +103,26 @@ export type Product = {
   description?: string;
   category?: string;
   amharicName?: string;
+  gallery_images?: string[];
+  color_options?: ProductColorOption[];
+  blueprint_image_url?: string | null;
+  wood_options?: string[];
+  fabric_options?: string[];
 };
+
+export type ProductColorOption = {
+  name: string;
+  color: string;
+  image_url?: string;
+};
+
+export const DEFAULT_PRODUCT_COLORS: ProductColorOption[] = [
+  { name: "Black", color: "#222222" },
+  { name: "White", color: "#F5F2EC" },
+  { name: "Yellow", color: "#E6C45A" },
+  { name: "Blue", color: "#647D9B" },
+  { name: "Green", color: "#65745B" },
+];
 
 /**
  * Structured sofa collection extracted from the Anteniguss Look Book 2026 catalogue.

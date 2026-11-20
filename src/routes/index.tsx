@@ -34,6 +34,7 @@ const SIXPENNY_CATEGORIES = [
     title: "SOFAS",
     count: "18",
     image: images.curvedBoucleSofa,
+    imageRatio: "aspect-[3/4]",
     to: "/shop",
     search: { category: "sofas" },
   },
@@ -41,6 +42,7 @@ const SIXPENNY_CATEGORIES = [
     title: "CHAIRS",
     count: "33",
     image: images.boucleArmchair,
+    imageRatio: "aspect-[4/5]",
     to: "/shop",
     search: { category: "armchairs" },
   },
@@ -48,6 +50,7 @@ const SIXPENNY_CATEGORIES = [
     title: "SECTIONALS",
     count: "72",
     image: images.curvedSectional,
+    imageRatio: "aspect-[3/4]",
     to: "/shop",
     search: { category: "sofas" },
   },
@@ -55,6 +58,7 @@ const SIXPENNY_CATEGORIES = [
     title: "BEDS",
     count: "09",
     image: images.bedVelvet,
+    imageRatio: "aspect-[4/5]",
     to: "/shop",
     search: { category: "living-kids" },
   },
@@ -62,6 +66,7 @@ const SIXPENNY_CATEGORIES = [
     title: "DINING",
     count: "24",
     image: images.diningOval,
+    imageRatio: "aspect-square",
     to: "/shop",
     search: { category: "dining" },
   },
@@ -69,6 +74,7 @@ const SIXPENNY_CATEGORIES = [
     title: "TABLES",
     count: "16",
     image: images.consoleSculpted,
+    imageRatio: "aspect-[4/5]",
     to: "/shop",
     search: { category: "dining" },
   },
@@ -159,10 +165,10 @@ function Home() {
       {/* 2. CATEGORY CAROUSEL — Sixpenny Exact Gallery with Superscript Item Counts */}
       <section className="border-t border-[#EAE6DE] py-14 sm:py-20">
         <div className="mx-auto max-w-[125rem] px-6 sm:px-10 lg:px-16">
-          {/* Scrollable Track */}
+         {/* Scrollable Track */}
           <div
             ref={carouselRef}
-            className="flex gap-5 sm:gap-7 overflow-x-auto scrollbar-none scroll-smooth pb-4 select-none"
+            className="flex items-start gap-5 sm:gap-7 overflow-x-auto scrollbar-none scroll-smooth pb-4 select-none"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {SIXPENNY_CATEGORIES.map((cat) => (
@@ -170,9 +176,9 @@ function Home() {
                 key={cat.title}
                 to={cat.to}
                 search={cat.search}
-                className="group flex-none w-[70vw] sm:w-[38vw] lg:w-[22vw] block cursor-pointer"
+                className="group block w-[70vw] flex-none cursor-pointer sm:w-[38vw] lg:w-[22vw]"
               >
-                <div className="relative aspect-[3/4] overflow-hidden bg-[#EAE6DE]">
+                <div className={`relative ${cat.imageRatio} overflow-hidden bg-[#EAE6DE]`}>
                   <img
                     src={cat.image}
                     alt={cat.title}

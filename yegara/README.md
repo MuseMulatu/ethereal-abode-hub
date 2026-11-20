@@ -56,6 +56,10 @@ In your Vercel Project Dashboard → **Settings** → **Environment Variables**:
    - `posts`: Full SEO blog articles with meta titles and Google keywords
    - `inquiries` & `inquiry_items`: Customer inquiries CRM pipeline
 
+For an existing installation, run [`migration-product-customization.sql`](./migration-product-customization.sql)
+once in the database's SQL tab. It adds product color swatches, blueprint image URLs, and the
+selected color field for quote items. Upload the updated `api-bridge.php` as well.
+
 ---
 
 ## 2. API Endpoints Reference

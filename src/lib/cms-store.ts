@@ -6,7 +6,12 @@
  * persistent local cache with full CRUD capabilities.
  */
 
-import { catalogueSofas, type Product } from "@/data/site";
+import {
+  catalogueSofas,
+  DEFAULT_PRODUCT_COLORS,
+  type Product,
+  type ProductColorOption,
+} from "@/data/site";
 
 // =========================================================================
 // TYPES & INTERFACES
@@ -26,6 +31,8 @@ export interface BackendProduct {
   price_etb?: number | null;
   image_url: string;
   gallery_images?: string[];
+  color_options?: ProductColorOption[];
+  blueprint_image_url?: string | null;
   wood_options?: string[];
   fabric_options?: string[];
   span?: "normal" | "wide" | "tall";
@@ -42,6 +49,7 @@ export interface InquiryItem {
   product_name: string;
   selected_wood?: string | null;
   selected_fabric?: string | null;
+  selected_color?: string | null;
   quantity: number;
 }
 
@@ -167,6 +175,8 @@ const INITIAL_PRODUCTS: BackendProduct[] = catalogueSofas.map((s, idx) => ({
   price_etb: null,
   image_url: s.image,
   gallery_images: [],
+  color_options: DEFAULT_PRODUCT_COLORS,
+  blueprint_image_url: null,
   wood_options: ["Solid Teak", "Wanza (Cordia)", "Mahogany", "White Oak"],
   fabric_options: ["Bouclé Cream", "Belgian Linen", "Plush Velvet Olive", "Leather Cognac"],
   span: s.span || "normal",
@@ -184,7 +194,7 @@ const INITIAL_SETTINGS: SiteSettingsMap = {
       "Sofas, armchairs, dining sets and beds, made in Addis Ababa in the size and fabric you choose.",
     kicker: "አንተ፡ንጉስ · Addis Ababa",
     backgroundImage: "/IMG_5171.jpg",
-    ctaLabel: "Browse Catalog",
+    ctaLabel: "Browse Products",
     ctaTo: "/shop",
     secondaryCtaLabel: "Custom Order",
     secondaryCtaTo: "/shop",
@@ -197,7 +207,7 @@ const INITIAL_SETTINGS: SiteSettingsMap = {
     bullet2: "See and feel fabrics at the showroom",
     bullet3: "Delivery and setup by our team",
     imageUrl: "/curved-sectional.jpg",
-    ctaLabel: "Explore Catalog & Quote",
+    ctaLabel: "Explore Products & Quote",
   },
   showroom: {
     headline: "Visit the showroom",
@@ -884,6 +894,7 @@ export interface BagItem {
   dimensions?: string;
   selectedWood: string;
   selectedFabric: string;
+  selectedColor?: string;
   quantity: number;
   customNotes?: string;
 }
