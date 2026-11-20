@@ -58,7 +58,6 @@ export function ProductDetailPage({ product }: { product: Product }) {
     () => (product.color_options?.length ? product.color_options : DEFAULT_PRODUCT_COLORS),
     [product.color_options],
   );
-  const firstColor = useMemo(() => colors[0] ?? { name: "Natural", color: "#F5F2EC" }, [colors]);
   const woodOptions = useMemo(
     () =>
       parseOptions(product.wood_options, ["Wanza (Cordia)", "Solid Teak", "Mahogany", "White Oak"]),
@@ -78,7 +77,7 @@ export function ProductDetailPage({ product }: { product: Product }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [selectedWood, setSelectedWood] = useState(woodOptions[0] || "");
   const [selectedFabric, setSelectedFabric] = useState(fabricOptions[0] || "");
-  const [selectedColor, setSelectedColor] = useState<ProductColorOption>(firstColor);
+  const [selectedColor, setSelectedColor] = useState<ProductColorOption | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [customNotes, setCustomNotes] = useState("");
   const [added, setAdded] = useState(false);
@@ -87,18 +86,19 @@ export function ProductDetailPage({ product }: { product: Product }) {
     setImageIndex(0);
     setSelectedWood(woodOptions[0] || "");
     setSelectedFabric(fabricOptions[0] || "");
-    setSelectedColor(firstColor);
+    setSelectedColor(null);
     setQuantity(1);
     setCustomNotes("");
-  }, [product.id, firstColor, fabricOptions, woodOptions]);
+  }, [product.id, fabricOptions, woodOptions]);
 
-  const mappedImage = selectedColor.image_url;
-  const useMappedImage = Boolean(mappedImage && imageIndex === 0);
-  const previewImage =
-    mappedImage && imageIndex === 0 ? mappedImage : gallery[imageIndex] || product.image;
-  const previewStyle = useMappedImage
-    ? undefined
-    : { filter: cssColorTreatment(selectedColor), transition: "filter 250ms ease" };
+  const mappedImage = selectedColor?.image_url;
+  const previewImage = selectedColor
+    ? mappedImage || gallery[0] || product.image
+    : gallery[imageIndex] || product.image;
+  const previewStyle =
+    selectedColor && !mappedImage
+      ? { filter: cssColorTreatment(selectedColor), transition: "filter 250ms ease" }
+      : undefined;
 
   const handleAddToBag = () => {
     addToQuoteBag({
@@ -108,8 +108,8 @@ export function ProductDetailPage({ product }: { product: Product }) {
       dimensions: product.dimensions || product.detail,
       selectedWood,
       selectedFabric,
-      selectedColor: selectedColor.name,
       quantity,
+      ...(selectedColor ? { selectedColor: selectedColor.name } : {}),
       ...(customNotes.trim() ? { customNotes: customNotes.trim() } : {}),
     });
     setAdded(true);
@@ -117,6 +117,7 @@ export function ProductDetailPage({ product }: { product: Product }) {
   };
 
   const changeImage = (direction: -1 | 1) => {
+    setSelectedColor(null);
     setImageIndex((current) => (current + direction + gallery.length) % gallery.length);
   };
 
@@ -167,10 +168,13 @@ export function ProductDetailPage({ product }: { product: Product }) {
                   <button
                     type="button"
                     key={`${image}-${index}`}
-                    onClick={() => setImageIndex(index)}
+                    onClick={() => {
+                      setSelectedColor(null);
+                      setImageIndex(index);
+                    }}
                     aria-label={`Show product image ${index + 1}`}
-                    aria-pressed={index === imageIndex}
-                    className={`h-20 w-20 shrink-0 overflow-hidden border bg-stone ${index === imageIndex ? "border-foreground" : "border-border"}`}
+                    aria-pressed={!selectedColor && index === imageIndex}
+                    className={`h-20 w-20 shrink-0 overflow-hidden border bg-stone ${!selectedColor && index === imageIndex ? "border-foreground" : "border-border"}`}
                   >
                     <img src={image} alt="" className="h-full w-full object-cover" />
                   </button>
@@ -212,9 +216,10 @@ export function ProductDetailPage({ product }: { product: Product }) {
 
             <fieldset className="mt-6">
               <legend className="mb-3 text-xs font-semibold uppercase tracking-wider">
-                Swatches <span className="font-normal normal-case">
-                  {/* {selectedColor.name} */}
-                  </span>
+                Swatches
+                {selectedColor && (
+                  <span className="ml-1 font-normal normal-case">· {selectedColor.name}</span>
+                )}
               </legend>
               <div className="flex flex-wrap gap-2.5">
                 {colors.map((color) => (
@@ -227,9 +232,9 @@ export function ProductDetailPage({ product }: { product: Product }) {
                     }}
                     title={color.name}
                     aria-label={`Choose ${color.name}`}
-                    aria-pressed={selectedColor.name === color.name}
+                    aria-pressed={selectedColor?.name === color.name}
                     className={`h-8 w-8 border-2 transition-shadow ${
-                      selectedColor.name === color.name
+                      selectedColor?.name === color.name
                         ? "border-foreground ring-2 ring-foreground/20"
                         : "border-white shadow-[0_0_0_1px_#d6d3d1]"
                     }`}

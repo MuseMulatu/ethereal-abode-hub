@@ -700,7 +700,13 @@ switch ($action) {
         foreach ($allowedFields as $f) {
             if (array_key_exists($f, $input)) {
                 $fields[] = "`$f` = ?";
-                $params[] = $input[$f];
+                if (in_array($f, ['is_featured', 'is_top_pick', 'is_archived'], true)) {
+                    $params[] = !empty($input[$f]) ? 1 : 0;
+                } elseif ($f === 'sort_order') {
+                    $params[] = (int)$input[$f];
+                } else {
+                    $params[] = $input[$f];
+                }
             }
         }
 
